@@ -27,8 +27,8 @@ class BlinkDetector:
         rate = self.get_blink_rate()
 
         if rate < 8:
-            return "DROWSY"
+            return "DROWSY" ##경고창 띄움 경고 단계
         elif rate < 15:
-            return "LOW_FOCUS"
+            return "LOW_FOCUS" ##경고창 띄움 주의단계
         else:
             return "NORMAL"
