@@ -1,4 +1,4 @@
-import { fieldMap, modeData } from "../data/modeData";
+import { modeData, fieldMap } from "../../data/modeData";
 
 export default function ThresholdTable({ currentMode, thresholds, onChange }) {
     const { values, units } = modeData[currentMode];

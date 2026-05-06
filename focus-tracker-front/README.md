@@ -47,22 +47,44 @@ npm run dev
 ## 폴더 구조
 
 ```
-focus-tracker-front/
+focus-tracker/
+├── public/
+│
 ├── src/
 │   ├── components/
-│   │   ├── ModeSelector.jsx       # 모드 선택 카드
-│   │   ├── ThresholdTable.jsx     # 경고창 팝업 기준 테이블
-│   │   ├── BlockedSiteList.jsx    # 금지 페이지 목록
-│   │   ├── OptionToggles.jsx      # 선택 기능 토글
-│   │   └── Toast.jsx              # 저장 완료 알림
+│   │   ├── layout/
+│   │   │   └── Header.jsx              # 상단 헤더 (모드 전환 nav, Settings 버튼)
+│   │   ├── settings/
+│   │   │   ├── ThresholdTable.jsx      # 경고창 팝업 기준값 테이블
+│   │   │   ├── BlockedSiteList.jsx     # 금지 사이트 목록 (추가/삭제)
+│   │   │   └── OptionToggles.jsx       # 선택 기능 토글 (팝업 허용, iframe 차단, 휴식 시간)
+│   │   ├── DrowsyMonitor.jsx           # 졸음 감지 결과 표시 카드
+│   │   ├── FocusRings.jsx              # 집중도 지표 링 차트 (7개 지표 + 종합)
+│   │   ├── FocusTimeChart.jsx          # 집중 시간 반원 차트
+│   │   └── Toast.jsx                   # 설정 저장 토스트 알림
+│   │
 │   ├── data/
-│   │   └── modeData.js            # 모드별 기준값 상수
-│   ├── App.jsx                    # 전체 상태 관리
-│   ├── main.jsx                   # React 진입점
-│   └── index.css                  # 글로벌 스타일
+│   │   └── modeData.js                 # 모드별 기준값·단위 데이터
+│   │
+│   ├── hooks/
+│   │   └── useDrowsyDetection.js       # MediaPipe FaceMesh 기반 졸음 감지 훅
+│   │                                   # (EAR/MAR/헤드틸트, 집중시간 누적)
+│   ├── lib/
+│   │   └── BlinkDetector.js            # 깜빡임 횟수·상태 계산 클래스
+│   │
+│   ├── pages/
+│   │   ├── ModeSelectPage.jsx          # 모드 선택 화면 (강의/자료/잠금/휴식)
+│   │   ├── MainPage.jsx                # 메인 화면 (졸음감지 + FocusRings + 집중시간)
+│   │   ├── SettingsPage.jsx            # 설정 화면
+│   │   └── ReportPage.jsx              # 세션 종료 후 리포트 화면
+│   │
+│   ├── App.jsx                         # 페이지 상태 관리, 전체 라우팅
+│   ├── main.jsx                        # React 엔트리포인트
+│   └── index.css                       # 전역 스타일 (box-sizing, font)
+│
 ├── index.html
-├── package.json
-└── vite.config.js
+├── vite.config.js
+└── package.json
 ```
 
 ---

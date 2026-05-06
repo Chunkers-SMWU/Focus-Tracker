@@ -1,12 +1,62 @@
-import { useState, useCallback } from "react";
-import ModeSelector from "./components/ModeSelector";
-import ThresholdTable from "./components/ThresholdTable";
-import BlockedSiteList from "./components/BlockedSiteList";
-import OptionToggles from "./components/OptionToggles";
-import Toast from "./components/Toast";
-import { modeData } from "./data/modeData";
+import { useState, useCallback, useEffect, useRef } from "react";
+import Header from "./components/layout/Header";
+import MainPage from "./pages/MainPage";
+import SettingsPage from "./pages/SettingsPage";
+import ModeSelectPage from "./pages/ModeSelectPage";
+import ReportPage from "./pages/ReportPage";
+import { useDrowsyDetection } from "./hooks/useDrowsyDetection.js";
 
+// 스플래시
+function SplashScreen() {
+    return (
+        <div
+            style={{
+                position: "fixed",
+                inset: 0,
+                background: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 9999,
+                animation: "splashFadeOut 0.5s ease 1.8s forwards",
+            }}
+        >
+            <div
+                style={{
+                    fontSize: 28,
+                    fontWeight: 700,
+                    color: "#2563eb",
+                    letterSpacing: "-0.02em",
+                    animation: "splashFadeIn 0.6s ease forwards",
+                }}
+            >
+                Focus Tracker
+            </div>
+            <style>{`
+                @keyframes splashFadeIn {
+                    from { opacity: 0; transform: scale(0.92); }
+                    to   { opacity: 1; transform: scale(1); }
+                }
+                @keyframes splashFadeOut {
+                    from { opacity: 1; }
+                    to   { opacity: 0; pointer-events: none; }
+                }
+            `}</style>
+        </div>
+    );
+}
+
+// App
 export default function App() {
+    const [showSplash, setShowSplash] = useState(true);
+    // 스플래시 → 모드선택 → 메인 → 리포트 순서로 진행
+    const [page, setPage] = useState("modeSelect"); // "modeSelect" | "main" | "settings" | "report"
+
+    // 졸음 감지 — App 레벨에서 관리해야 페이지 전환 시 상태 유지
+    const drowsyVideoRef = useRef(null);
+    const drowsy = useDrowsyDetection(drowsyVideoRef);
+
+    // 설정 상태 — App이 single source of truth
     const [currentMode, setCurrentMode] = useState("강의");
     const [thresholds, setThresholds] = useState({});
     const [sites, setSites] = useState([
@@ -21,164 +71,88 @@ export default function App() {
     const [restMinutes, setRestMinutes] = useState(10);
     const [toastVisible, setToastVisible] = useState(false);
 
+    useEffect(() => {
+        const t = setTimeout(() => setShowSplash(false), 2300);
+        return () => clearTimeout(t);
+    }, []);
+
     const handleModeSelect = (mode) => {
         setCurrentMode(mode);
-        setThresholds({}); // 모드 변경 시 임계값 초기화
+        setThresholds({});
     };
 
-    const handleThresholdChange = (key, val) =>
-        setThresholds((prev) => ({ ...prev, [key]: val }));
-
-    const handleOptionChange = (key, val) =>
-        setOptions((prev) => ({ ...prev, [key]: val }));
-
-    const handleSave = () => {
-        // TODO: fetch('/api/settings', { method: 'POST', body: JSON.stringify({...}) })
-        setToastVisible(true);
+    // 초기 모드 선택 완료 → 메인으로 전환
+    const handleInitialModeSelect = (mode) => {
+        setCurrentMode(mode);
+        setThresholds({});
+        setPage("main");
     };
 
-    const badge = modeData[currentMode].label;
+    const handleSave = () => setToastVisible(true);
+    const handleToastHide = useCallback(() => setToastVisible(false), []);
+    const handleSettingsOpen = () => setPage("settings");
+    const handleClose = () => setPage("main");
+    const handleEnd = () => setPage("report");
+    const handleRestart = () => window.location.reload();
 
     return (
-        <div
-            style={{
-                fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
-                background: "#f5f5f3",
-                minHeight: "100vh",
-                padding: "2rem 1rem",
-                color: "#1a1a1a",
-            }}
-        >
-            <div style={{ maxWidth: 720, margin: "0 auto" }}>
-                <div
-                    style={{
-                        fontSize: 22,
-                        fontWeight: 600,
-                        marginBottom: "2rem",
-                    }}
-                >
-                    브라우저 탭 설정
-                </div>
+        <>
+            {showSplash && <SplashScreen />}
 
-                <div style={{ marginBottom: "2rem" }}>
-                    <div
-                        style={{
-                            fontSize: 14,
-                            fontWeight: 600,
-                            color: "#666",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.05em",
-                            marginBottom: 10,
-                        }}
-                    >
-                        모드 선택
-                    </div>
-                    <ModeSelector
+            {/* 리포트 — 헤더 없이 단독 표시 */}
+            {page === "report" && (
+                <ReportPage
+                    currentMode={currentMode}
+                    onRestart={handleRestart}
+                />
+            )}
+
+            {/* 모드 선택 — 헤더 없이 단독 표시 */}
+            {!showSplash && page === "modeSelect" && (
+                <ModeSelectPage onSelect={handleInitialModeSelect} />
+            )}
+
+            {/* 메인 / 설정 — 헤더 포함 */}
+            {(page === "main" || page === "settings") && (
+                <>
+                    <Header
                         currentMode={currentMode}
-                        onSelect={handleModeSelect}
+                        onModeSelect={handleModeSelect}
+                        onSettingsOpen={handleSettingsOpen}
                     />
-                </div>
-
-                <Section
-                    title={
-                        <>
-                            경고창 팝업 기준{" "}
-                            <span
-                                style={{
-                                    fontSize: 11,
-                                    padding: "2px 9px",
-                                    borderRadius: 20,
-                                    background: "#eff6ff",
-                                    color: "#2563eb",
-                                    border: "1px solid #bfdbfe",
-                                    marginLeft: 8,
-                                    fontWeight: 500,
-                                }}
-                            >
-                                {badge}
-                            </span>
-                        </>
-                    }
-                >
-                    <ThresholdTable
-                        currentMode={currentMode}
-                        thresholds={thresholds}
-                        onChange={handleThresholdChange}
-                    />
-                </Section>
-
-                <Section title="금지 페이지 설정">
-                    <BlockedSiteList
-                        sites={sites}
-                        onAdd={(s) => setSites((prev) => [...prev, s])}
-                        onRemove={(s) =>
-                            setSites((prev) => prev.filter((x) => x !== s))
-                        }
-                    />
-                </Section>
-
-                <Section title="선택 기능">
-                    <OptionToggles
-                        options={options}
-                        onChange={handleOptionChange}
-                        currentMode={currentMode}
-                        restMinutes={restMinutes}
-                        onRestMinutesChange={setRestMinutes}
-                    />
-                </Section>
-
-                <button
-                    onClick={handleSave}
-                    style={{
-                        width: "100%",
-                        padding: 12,
-                        background: "#2563eb",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 10,
-                        fontSize: 15,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        marginTop: "1.5rem",
-                    }}
-                >
-                    설정 저장
-                </button>
-            </div>
-
-            <Toast
-                visible={toastVisible}
-                onHide={useCallback(() => setToastVisible(false), [])}
-            />
-        </div>
-    );
-}
-
-function Section({ title, children }) {
-    return (
-        <div style={{ marginBottom: "2rem" }}>
-            <div
-                style={{
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: "#666",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    marginBottom: 10,
-                }}
-            >
-                {title}
-            </div>
-            <div
-                style={{
-                    background: "#fff",
-                    border: "1px solid #e5e5e5",
-                    borderRadius: 12,
-                    padding: "1.25rem",
-                }}
-            >
-                {children}
-            </div>
-        </div>
+                    {page === "main" && (
+                        <MainPage
+                            currentMode={currentMode}
+                            drowsy={{ ...drowsy, videoRef: drowsyVideoRef }}
+                            onEnd={handleEnd}
+                        />
+                    )}
+                    {page === "settings" && (
+                        <SettingsPage
+                            currentMode={currentMode}
+                            thresholds={thresholds}
+                            onThresholdChange={(k, v) =>
+                                setThresholds((p) => ({ ...p, [k]: v }))
+                            }
+                            sites={sites}
+                            onSiteAdd={(s) => setSites((p) => [...p, s])}
+                            onSiteRemove={(s) =>
+                                setSites((p) => p.filter((x) => x !== s))
+                            }
+                            options={options}
+                            onOptionChange={(k, v) =>
+                                setOptions((p) => ({ ...p, [k]: v }))
+                            }
+                            restMinutes={restMinutes}
+                            onRestMinutesChange={setRestMinutes}
+                            toastVisible={toastVisible}
+                            onToastHide={handleToastHide}
+                            onSave={handleSave}
+                            onClose={handleClose}
+                        />
+                    )}
+                </>
+            )}
+        </>
     );
 }
