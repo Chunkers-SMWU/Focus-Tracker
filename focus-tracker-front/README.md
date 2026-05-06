@@ -47,9 +47,7 @@ npm run dev
 ## 폴더 구조
 
 ```
-focus-tracker/
-├── public/
-│
+focus-tracker-front/
 ├── src/
 │   ├── components/
 │   │   ├── layout/
