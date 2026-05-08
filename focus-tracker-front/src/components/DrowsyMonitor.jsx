@@ -89,7 +89,6 @@ export default function DrowsyMonitor({
                 muted
                 style={{ display: "none" }}
             />
-
             {error && <p style={{ color: "#dc2626", fontSize: 13 }}>{error}</p>}
 
             <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -113,19 +112,12 @@ export default function DrowsyMonitor({
                         </span>
                     </span>
                 </Row>
-                <Row label="깜빡임">
+                <Row label="깜빡임" last>
                     <span style={{ fontSize: 14, fontWeight: 600 }}>
                         {result.blinkRate}회/분{" "}
                         <span style={{ color: blinkMeta.color, marginLeft: 4 }}>
                             ({blinkMeta.label})
                         </span>
-                    </span>
-                </Row>
-                <Row label="EAR" last>
-                    <span
-                        style={{ fontSize: 14, fontWeight: 600, color: "#555" }}
-                    >
-                        {result.ear ?? "—"}
                     </span>
                 </Row>
             </div>

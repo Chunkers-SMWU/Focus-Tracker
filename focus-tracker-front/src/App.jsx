@@ -4,6 +4,8 @@ import MainPage from "./pages/MainPage";
 import SettingsPage from "./pages/SettingsPage";
 import ModeSelectPage from "./pages/ModeSelectPage";
 import ReportPage from "./pages/ReportPage";
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
 import { useDrowsyDetection } from "./hooks/useDrowsyDetection.js";
 
 // 스플래시
@@ -49,14 +51,11 @@ function SplashScreen() {
 // App
 export default function App() {
     const [showSplash, setShowSplash] = useState(true);
-    // 스플래시 → 모드선택 → 메인 → 리포트 순서로 진행
-    const [page, setPage] = useState("modeSelect"); // "modeSelect" | "main" | "settings" | "report"
+    const [page, setPage] = useState("login");
 
-    // 졸음 감지 — App 레벨에서 관리해야 페이지 전환 시 상태 유지
     const drowsyVideoRef = useRef(null);
     const drowsy = useDrowsyDetection(drowsyVideoRef);
 
-    // 설정 상태 — App이 single source of truth
     const [currentMode, setCurrentMode] = useState("강의");
     const [thresholds, setThresholds] = useState({});
     const [sites, setSites] = useState([
@@ -80,14 +79,11 @@ export default function App() {
         setCurrentMode(mode);
         setThresholds({});
     };
-
-    // 초기 모드 선택 완료 → 메인으로 전환
     const handleInitialModeSelect = (mode) => {
         setCurrentMode(mode);
         setThresholds({});
         setPage("main");
     };
-
     const handleSave = () => setToastVisible(true);
     const handleToastHide = useCallback(() => setToastVisible(false), []);
     const handleSettingsOpen = () => setPage("settings");
@@ -95,11 +91,40 @@ export default function App() {
     const handleEnd = () => setPage("report");
     const handleRestart = () => window.location.reload();
 
+    // 로그인 / 회원가입 / 로그아웃 핸들러
+    const handleLogin = () => setPage("modeSelect"); // TODO: 유저 정보 저장
+    const handleGuest = () => setPage("modeSelect");
+    const handleSignupPage = () => setPage("signup");
+    const handleSignupComplete = () => setPage("login");
+    const handleLogout = () => setPage("login");
+
     return (
         <>
             {showSplash && <SplashScreen />}
 
-            {/* 리포트 — 헤더 없이 단독 표시 */}
+            {/* 로그인 */}
+            {!showSplash && page === "login" && (
+                <LoginPage
+                    onLogin={handleLogin}
+                    onGuest={handleGuest}
+                    onSignup={handleSignupPage}
+                />
+            )}
+
+            {/* 회원가입 */}
+            {!showSplash && page === "signup" && (
+                <SignupPage
+                    onSignupComplete={handleSignupComplete}
+                    onBack={() => setPage("login")}
+                />
+            )}
+
+            {/* 모드 선택 */}
+            {!showSplash && page === "modeSelect" && (
+                <ModeSelectPage onSelect={handleInitialModeSelect} />
+            )}
+
+            {/* 리포트 */}
             {page === "report" && (
                 <ReportPage
                     currentMode={currentMode}
@@ -107,18 +132,14 @@ export default function App() {
                 />
             )}
 
-            {/* 모드 선택 — 헤더 없이 단독 표시 */}
-            {!showSplash && page === "modeSelect" && (
-                <ModeSelectPage onSelect={handleInitialModeSelect} />
-            )}
-
-            {/* 메인 / 설정 — 헤더 포함 */}
+            {/* 메인 / 설정 */}
             {(page === "main" || page === "settings") && (
                 <>
                     <Header
                         currentMode={currentMode}
                         onModeSelect={handleModeSelect}
                         onSettingsOpen={handleSettingsOpen}
+                        onLogout={handleLogout}
                     />
                     {page === "main" && (
                         <MainPage

@@ -1,10 +1,8 @@
 import { useMemo } from "react";
 
-// 모드별 지표 활성화 여부
+// ── 모드별 지표 활성화 여부 ──
 const MODE_CONFIG = {
     강의: {
-        gaze: false,
-        gazeOut: true,
         noFace: true,
         headTurn: true,
         eyeClosed: true,
@@ -12,8 +10,6 @@ const MODE_CONFIG = {
         headNod: true,
     },
     자료: {
-        gaze: false,
-        gazeOut: false,
         noFace: false,
         headTurn: true,
         eyeClosed: true,
@@ -21,8 +17,6 @@ const MODE_CONFIG = {
         headNod: true,
     },
     잠금: {
-        gaze: true,
-        gazeOut: true,
         noFace: true,
         headTurn: true,
         eyeClosed: true,
@@ -30,8 +24,6 @@ const MODE_CONFIG = {
         headNod: true,
     },
     휴식: {
-        gaze: false,
-        gazeOut: false,
         noFace: false,
         headTurn: false,
         eyeClosed: false,
@@ -40,32 +32,13 @@ const MODE_CONFIG = {
     },
 };
 
-// 링 메타데이터
+// ── 링 메타데이터 ───
 function buildMetrics(result, currentMode) {
     const cfg = MODE_CONFIG[currentMode] ?? MODE_CONFIG["강의"];
     const blinkRate = result?.blinkRate ?? 0;
     const headTiltCount = result?.headTiltCount ?? 0;
 
     return [
-        {
-            key: "gaze",
-            label: "화면 응시",
-            value: null,
-            max: 100,
-            unit: "%",
-            active: cfg.gaze,
-            thresholds: { warn: 60, danger: 40 },
-        },
-        {
-            key: "gazeOut",
-            label: "시선 이탈",
-            value: null,
-            max: 10,
-            unit: "회",
-            active: cfg.gazeOut,
-            thresholds: { warn: 2, danger: 4 },
-            inverse: true,
-        },
         {
             key: "noFace",
             label: "얼굴 부재",
@@ -120,7 +93,7 @@ function buildMetrics(result, currentMode) {
     ];
 }
 
-// 색상 결정
+// ── 색상 결정 ────
 function getColor(metric) {
     if (!metric.active) return { ring: "#e5e5e5", text: "#bbb" };
     const v = metric.value;
@@ -142,13 +115,13 @@ function getColor(metric) {
     return { ring: "#22c55e", text: "#22c55e" };
 }
 
-// 채움 비율 계산
+// ── 채움 비율 계산 ────
 function getFillRatio(metric) {
     if (!metric.active || metric.value === null) return 0;
     return Math.min(Math.max(metric.value / metric.max, 0), 1);
 }
 
-// 종합 집중도 계산
+// ── 종합 집중도 계산 ──
 function calcOverall(metrics, result) {
     const active = metrics.filter((m) => m.active && m.value !== null);
     const scores = active.map((m) => {
@@ -170,10 +143,10 @@ function calcOverall(metrics, result) {
     return Math.max(0, base - penalties);
 }
 
-// 링 size 고정값
+// ── 링 size 고정값 ──
 const RING_SIZE = 130;
 
-// SVG 링 컴포넌트
+// ── SVG 링 컴포넌트 ───
 function Ring({ metric, size = RING_SIZE }) {
     const r = size * 0.37;
     const sw = size * 0.07;
@@ -257,7 +230,7 @@ function Ring({ metric, size = RING_SIZE }) {
     );
 }
 
-// 종합 링
+// ── 종합 링 ────
 function OverallRing({ score, size = RING_SIZE }) {
     const r = size * 0.37;
     const sw = size * 0.08;
@@ -354,7 +327,7 @@ function OverallRing({ score, size = RING_SIZE }) {
     );
 }
 
-// 메인 컴포넌트
+// ── 메인 컴포넌트 ───
 export default function FocusRings({ result, currentMode }) {
     const metrics = useMemo(
         () => buildMetrics(result, currentMode),
@@ -371,7 +344,7 @@ export default function FocusRings({ result, currentMode }) {
                 background: "#fff",
                 border: "1px solid #e5e5e5",
                 borderRadius: 12,
-                padding: "20px 16px",
+                padding: "20px 24px",
                 fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
                 height: "100%",
                 boxSizing: "border-box",
@@ -382,24 +355,26 @@ export default function FocusRings({ result, currentMode }) {
             {/* 헤더 */}
             <div
                 style={{
-                    fontSize: 13,
+                    fontSize: 15,
                     fontWeight: 600,
                     color: "#1a1a1a",
-                    marginBottom: 16,
+                    marginBottom: 8,
                     flexShrink: 0,
                 }}
             >
                 집중도 모니터링
             </div>
 
-            {/* 4×2 그리드 */}
+            {/* 3×2 그리드 */}
             <div
                 style={{
                     flex: 1,
                     display: "grid",
-                    gridTemplateColumns: "repeat(4, 1fr)",
-                    gridTemplateRows: "repeat(2, 1fr)",
-                    gap: "16px 8px",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gridTemplateRows: "auto auto",
+                    columnGap: 8,
+                    rowGap: 14,
+                    alignContent: "center",
                     alignItems: "center",
                     justifyItems: "center",
                 }}

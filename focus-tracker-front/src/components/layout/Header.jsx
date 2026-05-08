@@ -7,7 +7,26 @@ const modeNavItems = {
     휴식: { icon: "😴", label: "휴식" },
 };
 
-export default function Header({ currentMode, onModeSelect, onSettingsOpen }) {
+const headerBtnStyle = {
+    background: "rgba(255,255,255,0.1)",
+    border: "1px solid rgba(255,255,255,0.15)",
+    borderRadius: 8,
+    padding: "6px 16px",
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: "pointer",
+    fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
+    transition: "background 0.15s",
+    flexShrink: 0,
+};
+
+export default function Header({
+    currentMode,
+    onModeSelect,
+    onSettingsOpen,
+    onLogout,
+}) {
     const [hovered, setHovered] = useState(false);
 
     return (
@@ -54,7 +73,7 @@ export default function Header({ currentMode, onModeSelect, onSettingsOpen }) {
                     Focus-Tracker
                 </span>
 
-                {/* 모드 탭 — position absolute로 항상 헤더 정중앙 고정 */}
+                {/* 모드 탭 */}
                 <nav
                     onMouseEnter={() => setHovered(true)}
                     onMouseLeave={() => setHovered(false)}
@@ -72,7 +91,6 @@ export default function Header({ currentMode, onModeSelect, onSettingsOpen }) {
                         overflow: "hidden",
                     }}
                 >
-                    {/* 축소 상태: MODE 텍스트 */}
                     <div
                         style={{
                             display: "flex",
@@ -94,8 +112,6 @@ export default function Header({ currentMode, onModeSelect, onSettingsOpen }) {
                     >
                         MODE
                     </div>
-
-                    {/* 확장 상태: 4개 버튼 */}
                     {Object.entries(modeNavItems).map(
                         ([mode, { icon, label }]) => (
                             <button
@@ -126,35 +142,45 @@ export default function Header({ currentMode, onModeSelect, onSettingsOpen }) {
                         ),
                     )}
                 </nav>
-                {/* Settings 버튼 */}
-                <button
-                    onClick={onSettingsOpen}
+
+                {/* 우측 버튼 그룹 */}
+                <div
                     style={{
                         marginLeft: "auto",
-                        background: "rgba(255,255,255,0.1)",
-                        border: "1px solid rgba(255,255,255,0.15)",
-                        borderRadius: 8,
-                        padding: "6px 16px",
-                        color: "#fff",
-                        fontSize: 13,
-                        fontWeight: 500,
-                        cursor: "pointer",
-                        fontFamily:
-                            "'Pretendard','Apple SD Gothic Neo',sans-serif",
-                        transition: "background 0.15s",
+                        display: "flex",
+                        gap: 8,
                         flexShrink: 0,
                     }}
-                    onMouseEnter={(e) =>
-                        (e.currentTarget.style.background =
-                            "rgba(255,255,255,0.18)")
-                    }
-                    onMouseLeave={(e) =>
-                        (e.currentTarget.style.background =
-                            "rgba(255,255,255,0.1)")
-                    }
                 >
-                    Settings
-                </button>
+                    <button
+                        onClick={onSettingsOpen}
+                        style={headerBtnStyle}
+                        onMouseEnter={(e) =>
+                            (e.currentTarget.style.background =
+                                "rgba(255,255,255,0.18)")
+                        }
+                        onMouseLeave={(e) =>
+                            (e.currentTarget.style.background =
+                                "rgba(255,255,255,0.1)")
+                        }
+                    >
+                        Settings
+                    </button>
+                    <button
+                        onClick={onLogout}
+                        style={headerBtnStyle}
+                        onMouseEnter={(e) =>
+                            (e.currentTarget.style.background =
+                                "rgba(255,255,255,0.18)")
+                        }
+                        onMouseLeave={(e) =>
+                            (e.currentTarget.style.background =
+                                "rgba(255,255,255,0.1)")
+                        }
+                    >
+                        로그아웃
+                    </button>
+                </div>
             </header>
         </>
     );
