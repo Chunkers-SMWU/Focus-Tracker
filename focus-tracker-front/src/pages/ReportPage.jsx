@@ -4,7 +4,6 @@ const modeLabels = {
     잠금: "잠금",
     휴식: "휴식",
 };
-
 const modeColors = {
     강의: "#2563eb",
     자료: "#16a34a",
@@ -12,7 +11,20 @@ const modeColors = {
     휴식: "#9333ea",
 };
 
-export default function ReportPage({ currentMode, onRestart }) {
+function fmt(sec) {
+    if (!sec) return "—";
+    const m = Math.floor(sec / 60)
+        .toString()
+        .padStart(2, "0");
+    const s = Math.floor(sec % 60)
+        .toString()
+        .padStart(2, "0");
+    return `${m}:${s}`;
+}
+
+export default function ReportPage({ currentMode, snapshot, onRestart }) {
+    const s = snapshot ?? {};
+
     return (
         <div
             style={{
@@ -80,41 +92,45 @@ export default function ReportPage({ currentMode, onRestart }) {
                     </Row>
                     <Row label="총 학습 시간">
                         <span style={{ fontWeight: 600 }}>
-                            — {/* TODO: 세션 시작 시각 기록 후 계산 필요 */}
+                            {fmt(s.totalSeconds)}
                         </span>
                     </Row>
-                    <Row label="종합 집중도" last>
+                    <Row label="집중 시간">
+                        <span style={{ fontWeight: 600, color: "#2563eb" }}>
+                            {fmt(s.focusSeconds)}
+                        </span>
+                    </Row>
+                    <Row label="비집중 시간">
+                        <span style={{ fontWeight: 600, color: "#dc2626" }}>
+                            {fmt(s.nonFocusSeconds)}
+                        </span>
+                    </Row>
+                    <Row label="집중도" last>
                         <span style={{ fontWeight: 600 }}>
-                            — {/* TODO: FocusRings overall 평균값 연결 필요 */}
+                            {s.totalSeconds > 0
+                                ? `${Math.round((s.focusSeconds / s.totalSeconds) * 100)}%`
+                                : "—"}
                         </span>
                     </Row>
                 </Section>
 
                 {/* 지표별 상세 */}
                 <Section title="지표별 상세">
-                    <Row label="깜빡임 평균">
+                    <Row label="깜빡임">
                         <span style={{ fontWeight: 600 }}>
-                            — 회/분 {/* TODO: blinkRate 시계열 평균 필요 */}
+                            {s.blinkRate != null ? `${s.blinkRate}회/분` : "—"}
                         </span>
                     </Row>
-                    <Row label="졸음 감지 횟수">
+                    <Row label="눈 감김 누적 시간">
                         <span style={{ fontWeight: 600 }}>
-                            — 회 {/* TODO: eyesClosed 이벤트 카운트 필요 */}
+                            {fmt(s.eyeClosedSeconds)}
                         </span>
                     </Row>
-                    <Row label="하품 횟수">
+                    <Row label="고개 기울기 횟수" last>
                         <span style={{ fontWeight: 600 }}>
-                            — 회 {/* TODO: mouthOpen 이벤트 카운트 필요 */}
-                        </span>
-                    </Row>
-                    <Row label="고개 기울기 횟수">
-                        <span style={{ fontWeight: 600 }}>
-                            — 회 {/* TODO: headTiltCount 최종값 연결 필요 */}
-                        </span>
-                    </Row>
-                    <Row label="경고 발생 횟수" last>
-                        <span style={{ fontWeight: 600 }}>
-                            — 회 {/* TODO: alert 이벤트 카운트 필요 */}
+                            {s.headTiltCount != null
+                                ? `${s.headTiltCount}회`
+                                : "—"}
                         </span>
                     </Row>
                 </Section>

@@ -56,9 +56,10 @@ focus-tracker-front/
 │   │   │   ├── ThresholdTable.jsx      # 경고창 팝업 기준값 테이블
 │   │   │   ├── BlockedSiteList.jsx     # 금지 사이트 목록 (추가/삭제)
 │   │   │   └── OptionToggles.jsx       # 선택 기능 토글 (팝업 허용, iframe 차단, 휴식 시간)
-│   │   ├── DrowsyMonitor.jsx           # 졸음 감지 결과 표시 카드 (EAR 항목 제거)
+│   │   ├── DrowsyMonitor.jsx           # 졸음 감지 결과 표시 카드
 │   │   ├── FocusRings.jsx              # 집중도 지표 링 차트 (5개 지표 + 종합, 3×2 그리드)
 │   │   ├── FocusTimeChart.jsx          # 집중 시간 반원 차트 (270도 호, 집중/전체/비집중)
+│   │   ├── TabStats.jsx                # 탭 활동 카드 (탭 전환·이탈·반복전환·차단 접속)
 │   │   └── Toast.jsx                   # 설정 저장 토스트 알림
 │   │
 │   ├── data/
@@ -66,7 +67,8 @@ focus-tracker-front/
 │   │
 │   ├── hooks/
 │   │   └── useDrowsyDetection.js       # MediaPipe FaceMesh 기반 졸음 감지 훅
-│   │                                   # (EAR/MAR/헤드틸트, totalSeconds/focusSeconds 누적)
+│   │                                   # (EAR/MAR/헤드틸트, 집중·비집중·눈감김 시간 누적,
+│   │                                   #  중지/재시작/초기화 지원)
 │   ├── lib/
 │   │   └── BlinkDetector.js            # 깜빡임 횟수·상태 계산 클래스
 │   │
@@ -74,7 +76,7 @@ focus-tracker-front/
 │   │   ├── LoginPage.jsx               # 로그인 화면 (아이디/비밀번호, 비회원/회원가입 버튼)
 │   │   ├── SignupPage.jsx              # 회원가입 화면 (이름/생년월일/전화번호/아이디/비밀번호)
 │   │   ├── ModeSelectPage.jsx          # 모드 선택 화면 (강의/자료/잠금/휴식)
-│   │   ├── MainPage.jsx                # 메인 화면 (졸음감지 + FocusRings + 집중시간, 2열 그리드)
+│   │   ├── MainPage.jsx                # 메인 화면 (졸음감지 + FocusRings + 집중시간 + 탭활동)
 │   │   ├── SettingsPage.jsx            # 설정 화면
 │   │   └── ReportPage.jsx              # 세션 종료 후 리포트 화면
 │   │

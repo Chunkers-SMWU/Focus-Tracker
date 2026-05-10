@@ -56,6 +56,8 @@ export default function App() {
     const drowsyVideoRef = useRef(null);
     const drowsy = useDrowsyDetection(drowsyVideoRef);
 
+    const [sessionSnapshot, setSessionSnapshot] = useState(null);
+
     const [currentMode, setCurrentMode] = useState("강의");
     const [thresholds, setThresholds] = useState({});
     const [sites, setSites] = useState([
@@ -88,8 +90,14 @@ export default function App() {
     const handleToastHide = useCallback(() => setToastVisible(false), []);
     const handleSettingsOpen = () => setPage("settings");
     const handleClose = () => setPage("main");
-    const handleEnd = () => setPage("report");
     const handleRestart = () => window.location.reload();
+
+    // 세션 종료 시 result 스냅샷 저장 + 웹캠 중지
+    const handleEnd = () => {
+        drowsy.stop();
+        setSessionSnapshot({ ...drowsy.result });
+        setPage("report");
+    };
 
     // 로그인 / 회원가입 / 로그아웃 핸들러
     const handleLogin = () => setPage("modeSelect"); // TODO: 유저 정보 저장
@@ -97,6 +105,9 @@ export default function App() {
     const handleSignupPage = () => setPage("signup");
     const handleSignupComplete = () => setPage("login");
     const handleLogout = () => setPage("login");
+
+    // 세션 초기화
+    const handleReset = () => drowsy.reset();
 
     return (
         <>
@@ -128,6 +139,7 @@ export default function App() {
             {page === "report" && (
                 <ReportPage
                     currentMode={currentMode}
+                    snapshot={sessionSnapshot}
                     onRestart={handleRestart}
                 />
             )}
@@ -146,6 +158,7 @@ export default function App() {
                             currentMode={currentMode}
                             drowsy={{ ...drowsy, videoRef: drowsyVideoRef }}
                             onEnd={handleEnd}
+                            onReset={handleReset}
                         />
                     )}
                     {page === "settings" && (

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-// ── 모드별 지표 활성화 여부 ──
+// 모드별 지표 활성화 여부
 const MODE_CONFIG = {
     강의: {
         noFace: true,
@@ -32,11 +32,12 @@ const MODE_CONFIG = {
     },
 };
 
-// ── 링 메타데이터 ───
+// 링 메타데이터
 function buildMetrics(result, currentMode) {
     const cfg = MODE_CONFIG[currentMode] ?? MODE_CONFIG["강의"];
     const blinkRate = result?.blinkRate ?? 0;
     const headTiltCount = result?.headTiltCount ?? 0;
+    const eyeClosedSeconds = result?.eyeClosedSeconds ?? null;
 
     return [
         {
@@ -62,7 +63,7 @@ function buildMetrics(result, currentMode) {
         {
             key: "eyeClosed",
             label: "눈 감김",
-            value: null,
+            value: eyeClosedSeconds,
             max: 30,
             unit: "초",
             active: cfg.eyeClosed,
@@ -93,7 +94,7 @@ function buildMetrics(result, currentMode) {
     ];
 }
 
-// ── 색상 결정 ────
+// 색상 결정
 function getColor(metric) {
     if (!metric.active) return { ring: "#e5e5e5", text: "#bbb" };
     const v = metric.value;
@@ -115,13 +116,13 @@ function getColor(metric) {
     return { ring: "#22c55e", text: "#22c55e" };
 }
 
-// ── 채움 비율 계산 ────
+// 채움 비율 계산
 function getFillRatio(metric) {
     if (!metric.active || metric.value === null) return 0;
     return Math.min(Math.max(metric.value / metric.max, 0), 1);
 }
 
-// ── 종합 집중도 계산 ──
+// 종합 집중도 계산
 function calcOverall(metrics, result) {
     const active = metrics.filter((m) => m.active && m.value !== null);
     const scores = active.map((m) => {
@@ -136,17 +137,18 @@ function calcOverall(metrics, result) {
             : 100;
     const penalties =
         (result?.eyesClosed ? 20 : 0) +
-        (result?.mouthOpen ? 15 : 0) +
+        (result?.mouthOpen ? 5 : 0) +
         (result?.alert ? 10 : 0) +
+        (result?.headTilted ? 5 : 0) +
         (result?.blinkState === "DROWSY" ? 20 : 0) +
         (result?.blinkState === "LOW_FOCUS" ? 10 : 0);
     return Math.max(0, base - penalties);
 }
 
-// ── 링 size 고정값 ──
-const RING_SIZE = 130;
+// 링 size 고정값
+const RING_SIZE = 100;
 
-// ── SVG 링 컴포넌트 ───
+// SVG 링 컴포넌트
 function Ring({ metric, size = RING_SIZE }) {
     const r = size * 0.37;
     const sw = size * 0.07;
@@ -154,10 +156,19 @@ function Ring({ metric, size = RING_SIZE }) {
     const circumference = 2 * Math.PI * r;
     const color = getColor(metric);
     const dashOffset = circumference * (1 - getFillRatio(metric));
-    const displayVal =
-        metric.value !== null
-            ? `${metric.value}${metric.unit === "%" ? "%" : ""}`
-            : "—";
+    const displayVal = (() => {
+        if (metric.value === null) return "—";
+        if (metric.unit === "%") return `${metric.value}%`;
+        if (metric.key === "eyeClosed") {
+            const total = Math.floor(metric.value);
+            const m = Math.floor(total / 60);
+            const s = total % 60;
+            return `${m}:${String(s).padStart(2, "0")}`;
+        }
+        if (metric.key === "blink") return `${metric.value}회/분`;
+        if (metric.key === "headTurn") return `${metric.value}회`;
+        return `${metric.value}`;
+    })();
 
     return (
         <div
@@ -230,7 +241,7 @@ function Ring({ metric, size = RING_SIZE }) {
     );
 }
 
-// ── 종합 링 ────
+// 종합 링
 function OverallRing({ score, size = RING_SIZE }) {
     const r = size * 0.37;
     const sw = size * 0.08;
@@ -327,7 +338,7 @@ function OverallRing({ score, size = RING_SIZE }) {
     );
 }
 
-// ── 메인 컴포넌트 ───
+// 메인 컴포넌트
 export default function FocusRings({ result, currentMode }) {
     const metrics = useMemo(
         () => buildMetrics(result, currentMode),
@@ -344,7 +355,7 @@ export default function FocusRings({ result, currentMode }) {
                 background: "#fff",
                 border: "1px solid #e5e5e5",
                 borderRadius: 12,
-                padding: "20px 24px",
+                padding: "14px 20px",
                 fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
                 height: "100%",
                 boxSizing: "border-box",
@@ -352,10 +363,9 @@ export default function FocusRings({ result, currentMode }) {
                 flexDirection: "column",
             }}
         >
-            {/* 헤더 */}
             <div
                 style={{
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: 600,
                     color: "#1a1a1a",
                     marginBottom: 8,
@@ -364,8 +374,6 @@ export default function FocusRings({ result, currentMode }) {
             >
                 집중도 모니터링
             </div>
-
-            {/* 3×2 그리드 */}
             <div
                 style={{
                     flex: 1,

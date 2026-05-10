@@ -47,28 +47,50 @@ const MOUTH = [13, 14, 17, 18, 78, 308];
 
 // 임계값
 const EAR_THRESHOLD = 0.2;
-const CLOSED_EYES_FRAMES = 30;
 const MAR_THRESHOLD = 0.7;
 const OPEN_MOUTH_FRAMES = 30;
 const HEAD_TILT_THRESHOLD = 15;
 const HEAD_TILT_FRAMES = 30;
 const HEAD_TILT_ALERT_COUNT = 2;
+const EYE_CLOSED_SECONDS = 0.5;
+
+// 초기 result 상태
+const INITIAL_RESULT = {
+    ear: null,
+    mar: null,
+    blinkRate: 0,
+    blinkCount: 0,
+    blinkState: "MEASURING",
+    eyesClosed: false,
+    mouthOpen: false,
+    headTiltCount: 0,
+    headTilted: false,
+    alert: false,
+    totalSeconds: 0,
+    focusSeconds: 0,
+    nonFocusSeconds: 0,
+    eyeClosedSeconds: 0,
+};
+
+// 초기 카운터 상태
+const makeInitialCounters = () => ({
+    eyeClosedStart: null,
+    eyeClosedDrowsy: false,
+    eyeClosedTotalSeconds: 0,
+    openMouthFrameCount: 0,
+    headTiltFrameCount: 0,
+    headTiltCount: 0, // 경고 판단용 (리셋됨)
+    headTiltTotal: 0, // 누적 카운터 (리셋 안 됨)
+    headTilted: false,
+    startTime: null,
+    lastFrameTime: null,
+    focusSeconds: 0,
+    nonFocusSeconds: 0,
+    stoppedTotalSeconds: 0,
+});
 
 export function useDrowsyDetection(videoRef) {
-    const [result, setResult] = useState({
-        ear: null,
-        mar: null,
-        blinkRate: 0,
-        blinkCount: 0,
-        blinkState: "MEASURING",
-        eyesClosed: false,
-        mouthOpen: false,
-        headTiltCount: 0,
-        alert: false,
-        // 추가
-        totalSeconds: 0,
-        focusSeconds: 0,
-    });
+    const [result, setResult] = useState(INITIAL_RESULT);
     const [error, setError] = useState(null);
     const [running, setRunning] = useState(false);
 
@@ -76,24 +98,34 @@ export function useDrowsyDetection(videoRef) {
     const faceMeshRef = useRef(null);
     const streamRef = useRef(null);
     const cameraRef = useRef(null);
-
-    const countersRef = useRef({
-        closedEyesFrameCount: 0,
-        openMouthFrameCount: 0,
-        headTiltFrameCount: 0,
-        headTiltCount: 0,
-        headTilted: false,
-        // 추가
-        startTime: null,
-        lastFrameTime: null,
-        focusSeconds: 0,
-    });
+    const countersRef = useRef(makeInitialCounters());
 
     const stop = () => {
+        cameraRef.current?.stop();
+        cameraRef.current = null;
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+        faceMeshRef.current?.close();
+        faceMeshRef.current = null;
+        setRunning(false);
+
+        const c = countersRef.current;
+        if (c.startTime !== null) {
+            c.stoppedTotalSeconds += (Date.now() - c.startTime) / 1000;
+            c.startTime = null;
+        }
+    };
+
+    // 모든 값 초기화
+    const reset = () => {
         cameraRef.current?.stop();
         streamRef.current?.getTracks().forEach((t) => t.stop());
         faceMeshRef.current?.close();
         setRunning(false);
+        detectorRef.current = new BlinkDetector();
+        countersRef.current = makeInitialCounters();
+        setResult(INITIAL_RESULT);
+        setError(null);
     };
 
     const loadScript = (src) =>
@@ -111,19 +143,21 @@ export function useDrowsyDetection(videoRef) {
         setError(null);
         detectorRef.current = new BlinkDetector();
 
-        // 이전 누적값 보존
         const prev = countersRef.current;
         countersRef.current = {
-            closedEyesFrameCount: 0,
+            eyeClosedStart: null,
+            eyeClosedDrowsy: false,
+            eyeClosedTotalSeconds: prev.eyeClosedTotalSeconds ?? 0,
             openMouthFrameCount: 0,
             headTiltFrameCount: 0,
             headTiltCount: 0,
+            headTiltTotal: prev.headTiltTotal ?? 0,
             headTilted: false,
-            // startTime은 최초 1회만 설정
-            startTime: prev.startTime ?? Date.now(),
+            startTime: Date.now(),
             lastFrameTime: Date.now(),
-            // focusSeconds 누적 이어받기
             focusSeconds: prev.focusSeconds ?? 0,
+            nonFocusSeconds: prev.nonFocusSeconds ?? 0,
+            stoppedTotalSeconds: prev.stoppedTotalSeconds ?? 0,
         };
 
         try {
@@ -150,6 +184,8 @@ export function useDrowsyDetection(videoRef) {
             });
 
             faceMesh.onResults((res) => {
+                // reset 후 faceMeshRef가 null이면 콜백 무시
+                if (!faceMeshRef.current) return;
                 if (!res.multiFaceLandmarks?.length) return;
 
                 const landmarks = res.multiFaceLandmarks[0];
@@ -166,17 +202,35 @@ export function useDrowsyDetection(videoRef) {
 
                 det.update(ear);
 
+                const now = Date.now();
+                const delta = (now - c.lastFrameTime) / 1000;
+                c.lastFrameTime = now;
+                // 이전 중지 누적 + 현재 세션 시간
+                const totalSeconds =
+                    c.stoppedTotalSeconds + (now - c.startTime) / 1000;
+
+                // 눈 감김 — 시간 기반
                 if (ear < EAR_THRESHOLD) {
-                    c.closedEyesFrameCount++;
+                    if (c.eyeClosedStart === null)
+                        c.eyeClosedStart = Date.now();
+                    const elapsed = (Date.now() - c.eyeClosedStart) / 1000;
+                    if (elapsed >= EYE_CLOSED_SECONDS) c.eyeClosedDrowsy = true;
                 } else {
-                    c.closedEyesFrameCount = 0;
+                    c.eyeClosedStart = null;
+                    c.eyeClosedDrowsy = false;
                 }
+                const eyesClosed = c.eyeClosedDrowsy;
+                if (eyesClosed) c.eyeClosedTotalSeconds += delta;
+
+                // 하품
                 if (mar > MAR_THRESHOLD) {
                     c.openMouthFrameCount++;
                 } else {
                     c.openMouthFrameCount = 0;
                 }
+                const mouthOpen = c.openMouthFrameCount >= OPEN_MOUTH_FRAMES;
 
+                // 고개 기울기
                 if (tiltAngle > HEAD_TILT_THRESHOLD) {
                     c.headTiltFrameCount++;
                     if (
@@ -185,14 +239,13 @@ export function useDrowsyDetection(videoRef) {
                     ) {
                         c.headTilted = true;
                         c.headTiltCount++;
+                        c.headTiltTotal++;
                     }
                 } else {
                     c.headTiltFrameCount = 0;
                     c.headTilted = false;
                 }
 
-                const eyesClosed = c.closedEyesFrameCount >= CLOSED_EYES_FRAMES;
-                const mouthOpen = c.openMouthFrameCount >= OPEN_MOUTH_FRAMES;
                 const tiltAlert = c.headTiltCount >= HEAD_TILT_ALERT_COUNT;
                 const blinkState = det.getState();
 
@@ -204,12 +257,10 @@ export function useDrowsyDetection(videoRef) {
                     tiltAlert ||
                     blinkState === "DROWSY";
 
-                // 시간 누적
-                const now = Date.now();
-                const delta = (now - c.lastFrameTime) / 1000;
-                c.lastFrameTime = now;
-                const totalSeconds = (now - c.startTime) / 1000;
-                if (!alert) c.focusSeconds += delta;
+                // 집중 시간 누적
+                const unfocused = alert || c.headTilted;
+                if (!unfocused) c.focusSeconds += delta;
+                else c.nonFocusSeconds += delta;
 
                 setResult({
                     ear: parseFloat(ear.toFixed(3)),
@@ -219,11 +270,15 @@ export function useDrowsyDetection(videoRef) {
                     blinkState,
                     eyesClosed,
                     mouthOpen,
-                    headTiltCount: c.headTiltCount,
+                    headTiltCount: c.headTiltTotal,
+                    headTilted: c.headTilted,
                     alert,
-                    // 추가
                     totalSeconds: parseFloat(totalSeconds.toFixed(1)),
                     focusSeconds: parseFloat(c.focusSeconds.toFixed(1)),
+                    nonFocusSeconds: parseFloat(c.nonFocusSeconds.toFixed(1)),
+                    eyeClosedSeconds: parseFloat(
+                        c.eyeClosedTotalSeconds.toFixed(1),
+                    ),
                 });
             });
 
@@ -255,5 +310,5 @@ export function useDrowsyDetection(videoRef) {
 
     useEffect(() => () => stop(), []);
 
-    return { result, error, running, start, stop };
+    return { result, error, running, start, stop, reset };
 }

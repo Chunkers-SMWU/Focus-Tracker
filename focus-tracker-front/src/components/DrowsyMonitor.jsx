@@ -20,7 +20,7 @@ export default function DrowsyMonitor({
     return (
         <div
             style={{
-                padding: "24px 28px",
+                padding: "14px 20px",
                 background: alert ? "#fef2f2" : "#fff",
                 border: `1px solid ${alert ? "#fca5a5" : "#e5e5e5"}`,
                 borderRadius: 12,
@@ -28,17 +28,16 @@ export default function DrowsyMonitor({
                 fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
             }}
         >
-            {/* 헤더 */}
             <div
                 style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    marginBottom: 20,
+                    marginBottom: 12,
                 }}
             >
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 15, fontWeight: 600 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>
                         졸음 감지
                     </span>
                     {alert && (
@@ -61,11 +60,11 @@ export default function DrowsyMonitor({
                 <button
                     onClick={running ? onStop : onStart}
                     style={{
-                        padding: "6px 18px",
+                        padding: "5px 18px",
                         borderRadius: 8,
                         border: "none",
                         cursor: "pointer",
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: 600,
                         background: running ? "#f3f4f6" : "#2563eb",
                         color: running ? "#555" : "#fff",
@@ -75,13 +74,7 @@ export default function DrowsyMonitor({
                 </button>
             </div>
 
-            <style>{`
-                @keyframes alertPulse {
-                    0%, 100% { opacity: 1; }
-                    50%       { opacity: 0.5; }
-                }
-            `}</style>
-
+            <style>{`@keyframes alertPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
             <video
                 ref={videoRef}
                 autoPlay
@@ -89,9 +82,9 @@ export default function DrowsyMonitor({
                 muted
                 style={{ display: "none" }}
             />
-            {error && <p style={{ color: "#dc2626", fontSize: 13 }}>{error}</p>}
+            {error && <p style={{ color: "#dc2626", fontSize: 12 }}>{error}</p>}
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
                 <Row label="졸음">
                     <Badge on={result.eyesClosed} />
                 </Row>
@@ -99,13 +92,13 @@ export default function DrowsyMonitor({
                     <Badge on={result.mouthOpen} />
                 </Row>
                 <Row label="자세">
-                    <span style={{ fontSize: 14, fontWeight: 600 }}>
-                        <Badge on={result.headTiltCount >= 1} />
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>
+                        <Badge on={result.headTilted} />
                         <span
                             style={{
-                                marginLeft: 8,
+                                marginLeft: 6,
                                 color: "#888",
-                                fontSize: 12,
+                                fontSize: 11,
                             }}
                         >
                             ({result.headTiltCount}회)
@@ -113,7 +106,7 @@ export default function DrowsyMonitor({
                     </span>
                 </Row>
                 <Row label="깜빡임" last>
-                    <span style={{ fontSize: 14, fontWeight: 600 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>
                         {result.blinkRate}회/분{" "}
                         <span style={{ color: blinkMeta.color, marginLeft: 4 }}>
                             ({blinkMeta.label})
@@ -132,9 +125,9 @@ function Row({ label, children, last }) {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "10px 0",
+                padding: "7px 0",
                 borderBottom: last ? "none" : "1px solid #f5f5f5",
-                fontSize: 14,
+                fontSize: 13,
             }}
         >
             <span style={{ color: "#888" }}>{label}</span>

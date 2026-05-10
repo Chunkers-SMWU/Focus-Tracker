@@ -1,6 +1,7 @@
 import DrowsyMonitor from "../components/DrowsyMonitor";
 import FocusRings from "../components/FocusRings";
 import FocusTimeChart from "../components/FocusTimeChart";
+import TabStats from "../components/TabStats";
 
 const modeLabels = {
     강의: "강의시청",
@@ -15,7 +16,7 @@ const modeColors = {
     휴식: "#9333ea",
 };
 
-export default function MainPage({ currentMode, drowsy, onEnd }) {
+export default function MainPage({ currentMode, drowsy, onEnd, onReset }) {
     return (
         <div
             style={{
@@ -26,7 +27,7 @@ export default function MainPage({ currentMode, drowsy, onEnd }) {
                 background: "#fff",
                 gap: 12,
                 fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
-                padding: "0 1.5rem 2rem",
+                padding: "0 1.5rem 10px",
                 boxSizing: "border-box",
             }}
         >
@@ -36,7 +37,7 @@ export default function MainPage({ currentMode, drowsy, onEnd }) {
                     fontSize: 14,
                     color: "#999",
                     letterSpacing: "0.05em",
-                    marginTop: 32,
+                    marginTop: 10,
                     marginBottom: 0,
                 }}
             >
@@ -44,7 +45,7 @@ export default function MainPage({ currentMode, drowsy, onEnd }) {
             </p>
             <p
                 style={{
-                    fontSize: 36,
+                    fontSize: 28,
                     fontWeight: 700,
                     color: modeColors[currentMode],
                     letterSpacing: "-0.02em",
@@ -58,18 +59,23 @@ export default function MainPage({ currentMode, drowsy, onEnd }) {
             <div
                 style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gridTemplateRows: "auto auto",
-                    gap: 24,
+                    gridTemplateColumns: "4fr 5fr",
+                    gap: 16,
                     width: "100%",
-                    maxWidth: 1200,
+                    maxWidth: 1000,
                     boxSizing: "border-box",
-                    alignItems: "stretch",
+                    alignItems: "start",
                     marginTop: 20,
                 }}
             >
-                {/* 졸음 감지 — 왼쪽 위 */}
-                <div style={{ gridColumn: 1, gridRow: 1 }}>
+                {/* 왼쪽 열 */}
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                    }}
+                >
                     <DrowsyMonitor
                         result={drowsy.result}
                         error={drowsy.error}
@@ -78,59 +84,80 @@ export default function MainPage({ currentMode, drowsy, onEnd }) {
                         onStop={drowsy.stop}
                         videoRef={drowsy.videoRef}
                     />
+                    <FocusTimeChart
+                        totalSeconds={drowsy.result.totalSeconds}
+                        focusSeconds={drowsy.result.focusSeconds}
+                        nonFocusSeconds={drowsy.result.nonFocusSeconds}
+                    />
                 </div>
 
-                {/* FocusRings — 오른쪽, 2행 전체 */}
+                {/* 오른쪽 열 */}
                 <div
                     style={{
-                        gridColumn: 2,
-                        gridRow: "1 / 3",
                         display: "flex",
                         flexDirection: "column",
+                        gap: 12,
                     }}
                 >
                     <FocusRings
                         result={drowsy.result}
                         currentMode={currentMode}
                     />
-                </div>
-
-                {/* 집중 시간 차트 — 왼쪽 아래 */}
-                <div style={{ gridColumn: 1, gridRow: 2 }}>
-                    <FocusTimeChart
-                        totalSeconds={drowsy.result.totalSeconds}
-                        focusSeconds={drowsy.result.focusSeconds}
-                        running={drowsy.running}
-                    />
+                    <TabStats stats={{}} />
                 </div>
             </div>
 
-            {/* 세션 종료 버튼 */}
-            <button
-                onClick={onEnd}
-                style={{
-                    marginTop: 24,
-                    padding: "10px 40px",
-                    background: "#fff",
-                    color: "#888",
-                    border: "1px solid #e5e5e5",
-                    borderRadius: 10,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "border-color 0.15s, color 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#dc2626";
-                    e.currentTarget.style.color = "#dc2626";
-                }}
-                onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#e5e5e5";
-                    e.currentTarget.style.color = "#888";
-                }}
-            >
-                세션 종료
-            </button>
+            {/* 하단 버튼 */}
+            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button
+                    onClick={onReset}
+                    style={{
+                        padding: "8px 28px",
+                        background: "#fff",
+                        color: "#888",
+                        border: "1px solid #e5e5e5",
+                        borderRadius: 10,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        transition: "border-color 0.15s, color 0.15s",
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "#888";
+                        e.currentTarget.style.color = "#1a1a1a";
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "#e5e5e5";
+                        e.currentTarget.style.color = "#888";
+                    }}
+                >
+                    세션 초기화
+                </button>
+                <button
+                    onClick={onEnd}
+                    style={{
+                        padding: "8px 28px",
+                        background: "#fff",
+                        color: "#888",
+                        border: "1px solid #e5e5e5",
+                        borderRadius: 10,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        transition: "border-color 0.15s, color 0.15s",
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "#dc2626";
+                        e.currentTarget.style.color = "#dc2626";
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "#e5e5e5";
+                        e.currentTarget.style.color = "#888";
+                    }}
+                >
+                    세션 종료
+                </button>
+            </div>
         </div>
     );
 }
