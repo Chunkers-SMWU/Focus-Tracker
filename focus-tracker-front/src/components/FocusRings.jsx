@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import styles from "./FocusRings.module.css";
 
 // 모드별 지표 활성화 여부
 const MODE_CONFIG = {
@@ -350,43 +351,9 @@ export default function FocusRings({ result, currentMode }) {
     );
 
     return (
-        <div
-            style={{
-                background: "#fff",
-                border: "1px solid #e5e5e5",
-                borderRadius: 12,
-                padding: "14px 20px",
-                fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
-                height: "100%",
-                boxSizing: "border-box",
-                display: "flex",
-                flexDirection: "column",
-            }}
-        >
-            <div
-                style={{
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: "#1a1a1a",
-                    marginBottom: 8,
-                    flexShrink: 0,
-                }}
-            >
-                집중도 모니터링
-            </div>
-            <div
-                style={{
-                    flex: 1,
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3, 1fr)",
-                    gridTemplateRows: "auto auto",
-                    columnGap: 8,
-                    rowGap: 14,
-                    alignContent: "center",
-                    alignItems: "center",
-                    justifyItems: "center",
-                }}
-            >
+        <div className={styles.card}>
+            <div className={styles.cardTitle}>집중도 모니터링</div>
+            <div className={styles.grid}>
                 {metrics.map((m) => (
                     <Ring key={m.key} metric={m} />
                 ))}

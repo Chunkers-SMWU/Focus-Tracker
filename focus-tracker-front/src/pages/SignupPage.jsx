@@ -1,4 +1,5 @@
 import { useState } from "react";
+import styles from "./SignupPage.module.css";
 
 export default function SignupPage({ onSignupComplete, onBack }) {
     const [form, setForm] = useState({
@@ -16,7 +17,7 @@ export default function SignupPage({ onSignupComplete, onBack }) {
         setError("");
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const { name, birth, phone, id, password, passwordConfirm } = form;
         if (!name || !birth || !phone || !id || !password || !passwordConfirm) {
             setError("모든 항목을 입력해주세요.");
@@ -27,59 +28,36 @@ export default function SignupPage({ onSignupComplete, onBack }) {
             return;
         }
         setError("");
-        // TODO: Spring API 연결
-        // 임시: 회원가입 성공 처리 후 로그인 화면으로
-        onSignupComplete();
+
+        try {
+            const res = await fetch("http://localhost:8080/api/auth/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, birth, phone, id, password }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alert("회원가입이 완료되었습니다!");
+                onSignupComplete();
+            } else {
+                setError(data.message || "회원가입에 실패했습니다.");
+            }
+        } catch (e) {
+            setError("서버에 연결할 수 없습니다.");
+        }
     };
 
     return (
-        <div
-            style={{
-                minHeight: "100vh",
-                background: "#fff",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "2rem 1rem",
-                fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
-            }}
-        >
-            <div style={{ width: "100%", maxWidth: 400 }}>
-                {/* 헤더 */}
-                <div style={{ textAlign: "center", marginBottom: 32 }}>
-                    <p
-                        style={{
-                            fontSize: 12,
-                            fontWeight: 600,
-                            color: "#2563eb",
-                            letterSpacing: "0.12em",
-                            textTransform: "uppercase",
-                            marginBottom: 8,
-                        }}
-                    >
-                        Focus Tracker
-                    </p>
-                    <h1
-                        style={{
-                            fontSize: 24,
-                            fontWeight: 700,
-                            color: "#1a1a1a",
-                            letterSpacing: "-0.02em",
-                        }}
-                    >
-                        회원가입
-                    </h1>
+        <div className={styles.container}>
+            <div className={styles.inner}>
+                <div className={styles.header}>
+                    <p className={styles.brand}>Focus Tracker</p>
+                    <h1 className={styles.title}>회원가입</h1>
                 </div>
 
-                {/* 폼 */}
-                <div
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 10,
-                    }}
-                >
+                <div className={styles.form}>
                     <Input
                         placeholder="이름"
                         value={form.name}
@@ -113,64 +91,12 @@ export default function SignupPage({ onSignupComplete, onBack }) {
                         onChange={(e) => set("passwordConfirm", e.target.value)}
                     />
 
-                    {error && (
-                        <p
-                            style={{
-                                fontSize: 12,
-                                color: "#dc2626",
-                                margin: 0,
-                            }}
-                        >
-                            {error}
-                        </p>
-                    )}
+                    {error && <p className={styles.errorText}>{error}</p>}
 
-                    <button
-                        onClick={handleSubmit}
-                        style={{
-                            marginTop: 4,
-                            padding: "11px",
-                            background: "#2563eb",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: 10,
-                            fontSize: 14,
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            transition: "background 0.15s",
-                        }}
-                        onMouseEnter={(e) =>
-                            (e.currentTarget.style.background = "#1d4ed8")
-                        }
-                        onMouseLeave={(e) =>
-                            (e.currentTarget.style.background = "#2563eb")
-                        }
-                    >
+                    <button className={styles.submitBtn} onClick={handleSubmit}>
                         가입하기
                     </button>
-
-                    <button
-                        onClick={onBack}
-                        style={{
-                            padding: "11px",
-                            background: "#fff",
-                            color: "#888",
-                            border: "1px solid #e5e5e5",
-                            borderRadius: 10,
-                            fontSize: 14,
-                            fontWeight: 500,
-                            cursor: "pointer",
-                            transition: "border-color 0.15s, color 0.15s",
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = "#888";
-                            e.currentTarget.style.color = "#1a1a1a";
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = "#e5e5e5";
-                            e.currentTarget.style.color = "#888";
-                        }}
-                    >
+                    <button className={styles.backBtn} onClick={onBack}>
                         로그인으로 돌아가기
                     </button>
                 </div>
@@ -186,21 +112,7 @@ function Input({ type = "text", placeholder, value, onChange }) {
             placeholder={placeholder}
             value={value}
             onChange={onChange}
-            style={{
-                width: "100%",
-                padding: "11px 14px",
-                border: "1px solid #e5e5e5",
-                borderRadius: 10,
-                fontSize: 14,
-                color: "#1a1a1a",
-                background: "#fafafa",
-                boxSizing: "border-box",
-                outline: "none",
-                transition: "border-color 0.15s",
-                fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
-            }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "#2563eb")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "#e5e5e5")}
+            className={styles.input}
         />
     );
 }

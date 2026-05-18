@@ -1,3 +1,5 @@
+import styles from "./ModeSelectPage.module.css";
+
 const modeCards = [
     {
         key: "강의",
@@ -42,64 +44,16 @@ const modeIcons = {
 
 export default function ModeSelectPage({ onSelect }) {
     return (
-        <div
-            style={{
-                minHeight: "100vh",
-                background: "#fff", // 메인화면과 동일한 흰색 배경
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "2rem 1rem",
-                fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
-            }}
-        >
+        <div className={styles.container}>
             {/* 타이틀 */}
-            <p
-                style={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "#2563eb", // 헤더/버튼의 브랜드 컬러
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    marginBottom: 10,
-                }}
-            >
-                Focus Tracker
-            </p>
-            <h1
-                style={{
-                    fontSize: 26,
-                    fontWeight: 700,
-                    color: "#1a1a1a", // 메인/설정 화면 기본 텍스트 색
-                    letterSpacing: "-0.02em",
-                    marginBottom: 6,
-                    textAlign: "center",
-                }}
-            >
-                모드를 선택하세요
-            </h1>
-            <p
-                style={{
-                    fontSize: 13,
-                    color: "#888", // 설정 화면 섹션 라벨과 동일한 색
-                    marginBottom: 36,
-                    textAlign: "center",
-                }}
-            >
+            <p className={styles.brand}>Focus Tracker</p>
+            <h1 className={styles.title}>모드를 선택하세요</h1>
+            <p className={styles.subtitle}>
                 선택한 모드로 집중 세션이 시작됩니다
             </p>
 
             {/* 카드 그리드 */}
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(4, 1fr)",
-                    gap: 24,
-                    width: "100%",
-                    maxWidth: 890,
-                }}
-            >
+            <div className={styles.grid}>
                 {modeCards.map((card) => (
                     <ModeCard key={card.key} card={card} onSelect={onSelect} />
                 ))}
@@ -111,23 +65,8 @@ export default function ModeSelectPage({ onSelect }) {
 function ModeCard({ card, onSelect }) {
     return (
         <button
+            className={styles.card}
             onClick={() => onSelect(card.key)}
-            style={{
-                minHeight: 360,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "stretch",
-                background: "#fff",
-                border: "1.5px solid #e5e5e5", // 설정 화면 카드와 동일한 테두리
-                borderRadius: 12, // 설정 화면 Section과 동일한 radius
-                padding: 0,
-                cursor: "pointer",
-                textAlign: "left",
-                overflow: "hidden",
-                transition:
-                    "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
-                fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
-            }}
             onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-4px)";
                 e.currentTarget.style.boxShadow =
@@ -141,65 +80,25 @@ function ModeCard({ card, onSelect }) {
             }}
         >
             {/* 모드 이름 */}
-            <div
-                style={{
-                    padding: "16px 16px 8px",
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: "#1a1a1a",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    gap: 7,
-                }}
-            >
-                {card.label}
-            </div>
+            <div className={styles.cardLabel}>{card.label}</div>
 
             {/* 이미지 Placeholder */}
             <div
+                className={styles.cardImage}
                 style={{
-                    height: 200,
-                    margin: "10px 16px",
-                    borderRadius: 8,
                     background: card.bg,
                     border: `1px solid ${card.border}`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
                 }}
             >
-                <span style={{ fontSize: 28 }}>{modeIcons[card.key]}</span>
+                <span className={styles.cardIcon}>{modeIcons[card.key]}</span>
             </div>
 
             {/* 설명 + 화살표 */}
-            <div
-                style={{
-                    padding: "10px 14px 14px",
-                    display: "flex",
-                    alignItems: "flex-end",
-                    justifyContent: "center",
-                    gap: 8,
-                }}
-            >
-                <p
-                    style={{
-                        fontSize: 11,
-                        color: "#888",
-                        lineHeight: 1.6,
-                        margin: 0,
-                        whiteSpace: "pre-line",
-                    }}
-                >
-                    {card.desc}
-                </p>
+            <div className={styles.cardFooter}>
+                <p className={styles.cardDesc}>{card.desc}</p>
                 <span
-                    style={{
-                        fontSize: 16,
-                        color: card.color,
-                        flexShrink: 0,
-                        lineHeight: 1,
-                    }}
+                    className={styles.cardArrow}
+                    style={{ color: card.color }}
                 >
                     →
                 </span>

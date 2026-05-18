@@ -1,26 +1,15 @@
 import { modeData, fieldMap } from "../../data/modeData";
+import styles from "./ThresholdTable.module.css";
 
 export default function ThresholdTable({ currentMode, thresholds, onChange }) {
     const { values, units } = modeData[currentMode];
 
     return (
-        <table
-            style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}
-        >
+        <table className={styles.table}>
             <thead>
                 <tr>
                     {["항목", "기준값", "단위"].map((h) => (
-                        <th
-                            key={h}
-                            style={{
-                                textAlign: "left",
-                                padding: "8px 10px",
-                                color: "#888",
-                                fontWeight: 500,
-                                borderBottom: "1px solid #f0f0f0",
-                                fontSize: 13,
-                            }}
-                        >
+                        <th key={h} className={styles.th}>
                             {h}
                         </th>
                     ))}
@@ -32,30 +21,10 @@ export default function ThresholdTable({ currentMode, thresholds, onChange }) {
                     const unit = units[f.key];
                     return (
                         <tr key={f.key}>
-                            <td
-                                style={{
-                                    padding: "10px",
-                                    borderBottom: "1px solid #f5f5f5",
-                                }}
-                            >
-                                {f.label}
-                            </td>
-                            <td
-                                style={{
-                                    padding: "10px",
-                                    borderBottom: "1px solid #f5f5f5",
-                                }}
-                            >
+                            <td className={styles.td}>{f.label}</td>
+                            <td className={styles.td}>
                                 {val === null ? (
-                                    <span
-                                        style={{
-                                            fontSize: 11,
-                                            padding: "3px 10px",
-                                            borderRadius: 20,
-                                            background: "#f0f0f0",
-                                            color: "#999",
-                                        }}
-                                    >
+                                    <span className={styles.badge}>
                                         해당 없음
                                     </span>
                                 ) : (
@@ -66,28 +35,11 @@ export default function ThresholdTable({ currentMode, thresholds, onChange }) {
                                         onChange={(e) =>
                                             onChange(f.key, e.target.value)
                                         }
-                                        style={{
-                                            width: 80,
-                                            border: "1px solid #ddd",
-                                            borderRadius: 8,
-                                            padding: "5px 8px",
-                                            fontSize: 13,
-                                            background: "#fafafa",
-                                            textAlign: "center",
-                                        }}
+                                        className={styles.input}
                                     />
                                 )}
                             </td>
-                            <td
-                                style={{
-                                    padding: "10px",
-                                    borderBottom: "1px solid #f5f5f5",
-                                    fontSize: 12,
-                                    color: "#888",
-                                }}
-                            >
-                                {unit ?? ""}
-                            </td>
+                            <td className={styles.tdUnit}>{unit ?? ""}</td>
                         </tr>
                     );
                 })}

@@ -2,6 +2,7 @@ import DrowsyMonitor from "../components/DrowsyMonitor";
 import FocusRings from "../components/FocusRings";
 import FocusTimeChart from "../components/FocusTimeChart";
 import TabStats from "../components/TabStats";
+import styles from "./MainPage.module.css";
 
 const modeLabels = {
     강의: "강의시청",
@@ -18,64 +19,20 @@ const modeColors = {
 
 export default function MainPage({ currentMode, drowsy, onEnd, onReset }) {
     return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                minHeight: "calc(100vh - 56px)",
-                background: "#fff",
-                gap: 12,
-                fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
-                padding: "0 1.5rem 10px",
-                boxSizing: "border-box",
-            }}
-        >
+        <div className={styles.container}>
             {/* 모드 이름 */}
+            <p className={styles.modeLabel}>CURRENT MODE</p>
             <p
-                style={{
-                    fontSize: 14,
-                    color: "#999",
-                    letterSpacing: "0.05em",
-                    marginTop: 10,
-                    marginBottom: 0,
-                }}
-            >
-                CURRENT MODE
-            </p>
-            <p
-                style={{
-                    fontSize: 28,
-                    fontWeight: 700,
-                    color: modeColors[currentMode],
-                    letterSpacing: "-0.02em",
-                    marginBottom: 0,
-                }}
+                className={styles.modeName}
+                style={{ color: modeColors[currentMode] }}
             >
                 {modeLabels[currentMode]}
             </p>
 
             {/* 메인 그리드 */}
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: "4fr 5fr",
-                    gap: 16,
-                    width: "100%",
-                    maxWidth: 1000,
-                    boxSizing: "border-box",
-                    alignItems: "start",
-                    marginTop: 20,
-                }}
-            >
+            <div className={styles.grid}>
                 {/* 왼쪽 열 */}
-                <div
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 12,
-                    }}
-                >
+                <div className={styles.col}>
                     <DrowsyMonitor
                         result={drowsy.result}
                         error={drowsy.error}
@@ -92,13 +49,7 @@ export default function MainPage({ currentMode, drowsy, onEnd, onReset }) {
                 </div>
 
                 {/* 오른쪽 열 */}
-                <div
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 12,
-                    }}
-                >
+                <div className={styles.col}>
                     <FocusRings
                         result={drowsy.result}
                         currentMode={currentMode}
@@ -108,53 +59,11 @@ export default function MainPage({ currentMode, drowsy, onEnd, onReset }) {
             </div>
 
             {/* 하단 버튼 */}
-            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button
-                    onClick={onReset}
-                    style={{
-                        padding: "8px 28px",
-                        background: "#fff",
-                        color: "#888",
-                        border: "1px solid #e5e5e5",
-                        borderRadius: 10,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        transition: "border-color 0.15s, color 0.15s",
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = "#888";
-                        e.currentTarget.style.color = "#1a1a1a";
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "#e5e5e5";
-                        e.currentTarget.style.color = "#888";
-                    }}
-                >
+            <div className={styles.btnRow}>
+                <button className={styles.resetBtn} onClick={onReset}>
                     세션 초기화
                 </button>
-                <button
-                    onClick={onEnd}
-                    style={{
-                        padding: "8px 28px",
-                        background: "#fff",
-                        color: "#888",
-                        border: "1px solid #e5e5e5",
-                        borderRadius: 10,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        transition: "border-color 0.15s, color 0.15s",
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = "#dc2626";
-                        e.currentTarget.style.color = "#dc2626";
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "#e5e5e5";
-                        e.currentTarget.style.color = "#888";
-                    }}
-                >
+                <button className={styles.endBtn} onClick={onEnd}>
                     세션 종료
                 </button>
             </div>

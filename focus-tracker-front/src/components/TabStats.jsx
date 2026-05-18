@@ -1,3 +1,5 @@
+import styles from "./TabStats.module.css";
+
 const ITEMS = [
     { key: "tabSwitch", label: "탭 전환 횟수", unit: "회" },
     { key: "tabAway", label: "탭 이탈 누적 시간", unit: "초" },
@@ -7,43 +9,23 @@ const ITEMS = [
 
 export default function TabStats({ stats = {} }) {
     return (
-        <div
-            style={{
-                background: "#fff",
-                border: "1px solid #e5e5e5",
-                borderRadius: 12,
-                padding: "12px 20px",
-                fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
-            }}
-        >
-            <div
-                style={{
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: "#1a1a1a",
-                    marginBottom: 8,
-                }}
-            >
-                탭 활동
-            </div>
-            <div style={{ display: "flex", flexDirection: "column" }}>
+        <div className={styles.card}>
+            <div className={styles.cardTitle}>탭 활동</div>
+            <div className={styles.list}>
                 {ITEMS.map((item, i) => (
                     <div
                         key={item.key}
+                        className={styles.row}
                         style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            padding: "6px 0",
+                            // i 기반 동적 값
                             borderBottom:
                                 i < ITEMS.length - 1
                                     ? "1px solid #f5f5f5"
                                     : "none",
-                            fontSize: 12,
                         }}
                     >
-                        <span style={{ color: "#888" }}>{item.label}</span>
-                        <span style={{ fontWeight: 600, color: "#1a1a1a" }}>
+                        <span className={styles.rowLabel}>{item.label}</span>
+                        <span className={styles.rowValue}>
                             {stats[item.key] != null
                                 ? `${stats[item.key]}${item.unit}`
                                 : "—"}

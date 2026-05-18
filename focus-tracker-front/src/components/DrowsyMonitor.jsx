@@ -1,3 +1,5 @@
+import styles from "./DrowsyMonitor.module.css";
+
 const BLINK_STATE_META = {
     MEASURING: { label: "측정 중…", color: "#888" },
     NORMAL: { label: "정상", color: "#16a34a" },
@@ -19,53 +21,25 @@ export default function DrowsyMonitor({
 
     return (
         <div
+            className={styles.card}
             style={{
-                padding: "14px 20px",
+                // alert 기반 동적 값
                 background: alert ? "#fef2f2" : "#fff",
                 border: `1px solid ${alert ? "#fca5a5" : "#e5e5e5"}`,
-                borderRadius: 12,
-                transition: "background 0.3s ease, border-color 0.3s ease",
-                fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
             }}
         >
-            <div
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: 12,
-                }}
-            >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 14, fontWeight: 600 }}>
-                        졸음 감지
-                    </span>
+            <div className={styles.cardHeader}>
+                <div className={styles.cardTitle}>
+                    <span className={styles.titleText}>졸음 감지</span>
                     {alert && (
-                        <span
-                            style={{
-                                fontSize: 11,
-                                fontWeight: 700,
-                                color: "#dc2626",
-                                background: "#fee2e2",
-                                border: "1px solid #fca5a5",
-                                borderRadius: 20,
-                                padding: "2px 10px",
-                                animation: "alertPulse 0.8s infinite",
-                            }}
-                        >
-                            ⚠️ 경고
-                        </span>
+                        <span className={styles.alertBadge}>⚠️ 경고</span>
                     )}
                 </div>
                 <button
+                    className={styles.toggleBtn}
                     onClick={running ? onStop : onStart}
                     style={{
-                        padding: "5px 18px",
-                        borderRadius: 8,
-                        border: "none",
-                        cursor: "pointer",
-                        fontSize: 12,
-                        fontWeight: 600,
+                        // running 기반 동적 값
                         background: running ? "#f3f4f6" : "#2563eb",
                         color: running ? "#555" : "#fff",
                     }}
@@ -82,7 +56,7 @@ export default function DrowsyMonitor({
                 muted
                 style={{ display: "none" }}
             />
-            {error && <p style={{ color: "#dc2626", fontSize: 12 }}>{error}</p>}
+            {error && <p className={styles.error}>{error}</p>}
 
             <div style={{ display: "flex", flexDirection: "column" }}>
                 <Row label="졸음">
@@ -92,22 +66,17 @@ export default function DrowsyMonitor({
                     <Badge on={result.mouthOpen} />
                 </Row>
                 <Row label="자세">
-                    <span style={{ fontSize: 13, fontWeight: 600 }}>
+                    <span className={styles.rowValue}>
                         <Badge on={result.headTilted} />
-                        <span
-                            style={{
-                                marginLeft: 6,
-                                color: "#888",
-                                fontSize: 11,
-                            }}
-                        >
+                        <span className={styles.tiltCount}>
                             ({result.headTiltCount}회)
                         </span>
                     </span>
                 </Row>
                 <Row label="깜빡임" last>
-                    <span style={{ fontSize: 13, fontWeight: 600 }}>
+                    <span className={styles.rowValue}>
                         {result.blinkRate}회/분{" "}
+                        {/* blinkMeta.color 기반 동적 값 */}
                         <span style={{ color: blinkMeta.color, marginLeft: 4 }}>
                             ({blinkMeta.label})
                         </span>
@@ -121,16 +90,13 @@ export default function DrowsyMonitor({
 function Row({ label, children, last }) {
     return (
         <div
+            className={styles.row}
             style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "7px 0",
+                // last 기반 동적 값
                 borderBottom: last ? "none" : "1px solid #f5f5f5",
-                fontSize: 13,
             }}
         >
-            <span style={{ color: "#888" }}>{label}</span>
+            <span className={styles.rowLabel}>{label}</span>
             {children}
         </div>
     );
@@ -138,6 +104,7 @@ function Row({ label, children, last }) {
 
 function Badge({ on }) {
     return (
+        // on 기반 동적 값
         <span style={{ fontWeight: 700, color: on ? "#dc2626" : "#16a34a" }}>
             {on ? "O" : "X"}
         </span>

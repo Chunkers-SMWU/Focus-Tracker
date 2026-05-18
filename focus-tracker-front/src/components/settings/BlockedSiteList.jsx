@@ -1,4 +1,5 @@
 import { useState } from "react";
+import styles from "./BlockedSiteList.module.css";
 
 export default function BlockedSiteList({ sites, onAdd, onRemove }) {
     const [input, setInput] = useState("");
@@ -12,65 +13,28 @@ export default function BlockedSiteList({ sites, onAdd, onRemove }) {
 
     return (
         <div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className={styles.list}>
                 {sites.map((site) => (
-                    <div
-                        key={site}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            padding: "9px 12px",
-                            background: "#fafafa",
-                            border: "1px solid #f0f0f0",
-                            borderRadius: 8,
-                            fontSize: 13,
-                        }}
-                    >
+                    <div key={site} className={styles.siteItem}>
                         <span>{site}</span>
                         <button
+                            className={styles.removeBtn}
                             onClick={() => onRemove(site)}
-                            style={{
-                                background: "none",
-                                border: "none",
-                                cursor: "pointer",
-                                color: "#ccc",
-                                fontSize: 18,
-                                lineHeight: 1,
-                                padding: "0 4px",
-                            }}
                         >
                             ×
                         </button>
                     </div>
                 ))}
             </div>
-            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <div className={styles.inputRow}>
                 <input
+                    className={styles.input}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAdd()}
                     placeholder="차단할 사이트 입력 (예: tiktok.com)"
-                    style={{
-                        flex: 1,
-                        border: "1px solid #ddd",
-                        borderRadius: 8,
-                        padding: "8px 12px",
-                        fontSize: 13,
-                        background: "#fafafa",
-                    }}
                 />
-                <button
-                    onClick={handleAdd}
-                    style={{
-                        background: "#fff",
-                        border: "1px solid #ddd",
-                        borderRadius: 8,
-                        padding: "8px 16px",
-                        fontSize: 13,
-                        cursor: "pointer",
-                    }}
-                >
+                <button className={styles.addBtn} onClick={handleAdd}>
                     + 추가
                 </button>
             </div>

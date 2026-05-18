@@ -1,3 +1,5 @@
+import styles from "./FocusTimeChart.module.css";
+
 const SIZE = 160;
 const STROKE = 13;
 const R = (SIZE - STROKE) / 2;
@@ -58,33 +60,17 @@ export default function FocusTimeChart({
     const hasData = totalSec > 0;
 
     return (
-        <div
-            style={{
-                padding: "14px 20px",
-                background: "#fff",
-                border: "1px solid #e5e5e5",
-                borderRadius: 12,
-                fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "stretch",
-            }}
-        >
-            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
-                집중 시간
-            </div>
-            <div style={{ display: "flex", gap: 16, marginBottom: 12 }}>
+        <div className={styles.card}>
+            <div className={styles.cardTitle}>집중 시간</div>
+            <div className={styles.legendRow}>
                 <Legend color="#2563eb" label="집중" />
                 <Legend color="#e5e5e5" label="비집중" />
             </div>
 
-            <div style={{ display: "flex", justifyContent: "center" }}>
+            <div className={styles.chartWrap}>
                 <div
-                    style={{
-                        position: "relative",
-                        width: SIZE,
-                        height: CHART_HEIGHT,
-                    }}
+                    className={styles.chartInner}
+                    style={{ width: SIZE, height: CHART_HEIGHT }}
                 >
                     <svg
                         width={SIZE}
@@ -109,33 +95,13 @@ export default function FocusTimeChart({
                             />
                         )}
                     </svg>
-                    <div
-                        style={{
-                            position: "absolute",
-                            top: PCT_TOP,
-                            left: "50%",
-                            transform: "translate(-50%, -50%)",
-                            fontSize: 22,
-                            fontWeight: 800,
-                            color: "#1a1a1a",
-                            lineHeight: 1,
-                            whiteSpace: "nowrap",
-                        }}
-                    >
+                    <div className={styles.pctLabel} style={{ top: PCT_TOP }}>
                         {hasData ? `${pct}%` : "—"}
                     </div>
                 </div>
             </div>
 
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginTop: 4,
-                    padding: "6px 0 0",
-                    borderTop: "1px solid #f5f5f5",
-                }}
-            >
+            <div className={styles.timeRow}>
                 <TimeBox
                     label="집중"
                     value={hasData ? fmt(focusSec) : "--:--"}
@@ -158,24 +124,8 @@ export default function FocusTimeChart({
 
 function Legend({ color, label }) {
     return (
-        <div
-            style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                fontSize: 11,
-                color: "#888",
-            }}
-        >
-            <span
-                style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: color,
-                    display: "inline-block",
-                }}
-            />
+        <div className={styles.legend}>
+            <span className={styles.legendDot} style={{ background: color }} />
             {label}
         </div>
     );
@@ -183,16 +133,9 @@ function Legend({ color, label }) {
 
 function TimeBox({ label, value, color }) {
     return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 2,
-            }}
-        >
-            <span style={{ fontSize: 10, color: "#aaa" }}>{label}</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color }}>
+        <div className={styles.timeBox}>
+            <span className={styles.timeLabel}>{label}</span>
+            <span className={styles.timeValue} style={{ color }}>
                 {value}
             </span>
         </div>
