@@ -7,6 +7,10 @@ import ReportPage from "./pages/ReportPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import { useDrowsyDetection } from "./hooks/useDrowsyDetection.js";
+import { useTabTracking } from "./hooks/useTabTracking.js";
+
+const DEFAULT_SITES = ["youtube.com", "instagram.com", "twitter.com"];
+const FOCUS_TRACKER_ORIGIN = "http://localhost:5173"; // 배포 시 실제 도메인으로 교체
 
 // 스플래시
 function SplashScreen() {
@@ -56,15 +60,31 @@ export default function App() {
     const drowsyVideoRef = useRef(null);
     const drowsy = useDrowsyDetection(drowsyVideoRef);
 
+    // 탭 추적 — App 레벨에서 관리해야 페이지 이동 시 초기화 안 됨
+    const { tabStats, reset: resetTabs } = useTabTracking(drowsy.running);
+
     const [sessionSnapshot, setSessionSnapshot] = useState(null);
 
     const [currentMode, setCurrentMode] = useState("강의");
     const [thresholds, setThresholds] = useState({});
-    const [sites, setSites] = useState([
-        "youtube.com",
-        "instagram.com",
-        "twitter.com",
-    ]);
+
+    // 차단 목록 — content.js 통해 chrome.storage 연동
+    const [sites, setSites] = useState(DEFAULT_SITES);
+    useEffect(() => {
+        // content.js에 로드 요청
+        window.postMessage({ type: "LOAD_SITES" }, FOCUS_TRACKER_ORIGIN);
+
+        // content.js로부터 응답 수신
+        const handleMessage = (e) => {
+            if (e.origin !== FOCUS_TRACKER_ORIGIN) return;
+            if (e.data?.type !== "SITES_LOADED") return;
+            if (e.data.sites) setSites(e.data.sites); // 저장된 값 있을 때만 덮어쓰기
+        };
+
+        window.addEventListener("message", handleMessage);
+        return () => window.removeEventListener("message", handleMessage);
+    }, []);
+
     const [options, setOptions] = useState({
         allowPopup: false,
         iframeBlock: true,
@@ -86,7 +106,13 @@ export default function App() {
         setThresholds({});
         setPage("main");
     };
-    const handleSave = () => setToastVisible(true);
+
+    // content.js에 저장 요청
+    const handleSave = () => {
+        window.postMessage({ type: "SAVE_SITES", sites }, FOCUS_TRACKER_ORIGIN);
+        setToastVisible(true);
+    };
+
     const handleToastHide = useCallback(() => setToastVisible(false), []);
     const handleSettingsOpen = () => setPage("settings");
     const handleClose = () => setPage("main");
@@ -107,7 +133,10 @@ export default function App() {
     const handleLogout = () => setPage("login");
 
     // 세션 초기화
-    const handleReset = () => drowsy.reset();
+    const handleReset = () => {
+        drowsy.reset();
+        resetTabs();
+    };
 
     return (
         <>
@@ -157,6 +186,7 @@ export default function App() {
                         <MainPage
                             currentMode={currentMode}
                             drowsy={{ ...drowsy, videoRef: drowsyVideoRef }}
+                            tabStats={tabStats}
                             onEnd={handleEnd}
                             onReset={handleReset}
                         />

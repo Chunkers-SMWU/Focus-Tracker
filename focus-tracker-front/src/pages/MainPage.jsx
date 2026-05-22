@@ -17,7 +17,13 @@ const modeColors = {
     휴식: "#9333ea",
 };
 
-export default function MainPage({ currentMode, drowsy, onEnd, onReset }) {
+export default function MainPage({
+    currentMode,
+    drowsy,
+    tabStats,
+    onEnd,
+    onReset,
+}) {
     return (
         <div className={styles.container}>
             {/* 모드 이름 */}
@@ -54,7 +60,7 @@ export default function MainPage({ currentMode, drowsy, onEnd, onReset }) {
                         result={drowsy.result}
                         currentMode={currentMode}
                     />
-                    <TabStats stats={{}} />
+                    <TabStats stats={tabStats} />
                 </div>
             </div>
 

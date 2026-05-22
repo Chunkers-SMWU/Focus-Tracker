@@ -99,14 +99,15 @@ export function useDrowsyDetection(videoRef) {
     const streamRef = useRef(null);
     const cameraRef = useRef(null);
     const countersRef = useRef(makeInitialCounters());
+    const closedRef = useRef(false); // 세션 종료 플래그
 
     const stop = () => {
+        closedRef.current = true; // onFrame/onResults 루프 즉시 차단
         cameraRef.current?.stop();
         cameraRef.current = null;
         streamRef.current?.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
-        faceMeshRef.current?.close();
-        faceMeshRef.current = null;
+        // 중지 시 faceMesh는 close하지 않고 재사용 (close/send 충돌 방지)
         setRunning(false);
 
         const c = countersRef.current;
@@ -116,11 +117,20 @@ export function useDrowsyDetection(videoRef) {
         }
     };
 
+    // faceMesh까지 완전히 종료 (세션 종료 / 초기화 / 언마운트 시)
+    const closeFaceMesh = () => {
+        closedRef.current = true;
+        cameraRef.current?.stop();
+        cameraRef.current = null;
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+        faceMeshRef.current?.close();
+        faceMeshRef.current = null;
+    };
+
     // 모든 값 초기화
     const reset = () => {
-        cameraRef.current?.stop();
-        streamRef.current?.getTracks().forEach((t) => t.stop());
-        faceMeshRef.current?.close();
+        closeFaceMesh();
         setRunning(false);
         detectorRef.current = new BlinkDetector();
         countersRef.current = makeInitialCounters();
@@ -140,6 +150,9 @@ export function useDrowsyDetection(videoRef) {
         });
 
     const start = async () => {
+        stop();
+        closedRef.current = false; // 새 세션 시작 — 플래그 초기화
+
         setError(null);
         detectorRef.current = new BlinkDetector();
 
@@ -184,7 +197,7 @@ export function useDrowsyDetection(videoRef) {
             });
 
             faceMesh.onResults((res) => {
-                // reset 후 faceMeshRef가 null이면 콜백 무시
+                if (closedRef.current) return; // 세션 종료 후 콜백 무시
                 if (!faceMeshRef.current) return;
                 if (!res.multiFaceLandmarks?.length) return;
 
@@ -292,6 +305,8 @@ export function useDrowsyDetection(videoRef) {
 
             const camera = new Camera(videoRef.current, {
                 onFrame: async () => {
+                    if (closedRef.current) return; // 세션 종료 후 루프 차단
+                    if (!faceMeshRef.current) return;
                     await faceMesh.send({ image: videoRef.current });
                 },
                 width: 640,
@@ -308,7 +323,7 @@ export function useDrowsyDetection(videoRef) {
         }
     };
 
-    useEffect(() => () => stop(), []);
+    useEffect(() => () => closeFaceMesh(), []);
 
     return { result, error, running, start, stop, reset };
 }
