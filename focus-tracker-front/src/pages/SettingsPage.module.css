@@ -1,0 +1,100 @@
+.container {
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    background: #fff;
+    min-height: calc(100vh - 56px);
+    padding: 2rem 1rem;
+    color: #1a1a1a;
+}
+
+.inner {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+/* 페이지 헤더 */
+.pageHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.pageTitle {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 22px;
+    color: #999;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: color 0.15s ease;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+}
+
+.closeBtn:hover {
+    color: #1a1a1a;
+}
+
+/* 배지 */
+.badge {
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 20px;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    margin-left: 8px;
+    font-weight: 500;
+}
+
+/* Section */
+.section {
+    margin-bottom: 2rem;
+}
+
+.sectionLabel {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+}
+
+.sectionBox {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+/* 저장 버튼 */
+.btnRow {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.saveBtn {
+    padding: 9px 48px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    transition: background 0.15s ease;
+}
+
+.saveBtn:hover {
+    background: #1d4ed8;
+}
