@@ -12,59 +12,82 @@ const DEFAULT_STATS = {
 export function useTabTracking(running) {
     const [tabStats, setTabStats] = useState(DEFAULT_STATS);
 
-    // 마지막 탭 전환 시각 (빠른 반복 전환 감지용)
     const lastSwitchTime = useRef(null);
-    // 탭 이탈 시작 시각 (이탈 시간 누적용)
     const awayStartTime = useRef(null);
+    const prevWasAllowed = useRef(false);
 
     // 초기화
     const reset = useCallback(() => {
         setTabStats(DEFAULT_STATS);
         lastSwitchTime.current = null;
         awayStartTime.current = null;
+        prevWasAllowed.current = false;
     }, []);
 
     useEffect(() => {
         const handleMessage = (e) => {
             if (e.origin !== FOCUS_TRACKER_ORIGIN) return;
             if (e.data?.type !== "TAB_CHANGED") return;
-
-            // running 중일 때만 카운트
             if (!running) return;
 
-            const { url, blocked } = e.data;
+            const { url, blocked, allowed } = e.data;
             const now = Date.now();
             const isCurrentTab = url.startsWith(FOCUS_TRACKER_ORIGIN);
 
-            // ref 업데이트는 setTabStats 밖에서 먼저 처리
+            // Focus Tracker 탭으로 복귀 — 이탈 시간 종료만, 카운트 없음
+            if (isCurrentTab) {
+                if (awayStartTime.current) {
+                    const awaySeconds = Math.floor(
+                        (now - awayStartTime.current) / 1000,
+                    );
+                    awayStartTime.current = null;
+                    if (awaySeconds > 0) {
+                        setTabStats((prev) => ({
+                            ...prev,
+                            tabAway: prev.tabAway + awaySeconds,
+                        }));
+                    }
+                }
+                prevWasAllowed.current = false;
+                return;
+            }
+
+            // 허용 사이트로 전환 — 모든 카운트 없음, 이탈 타이머도 시작 안 함
+            if (allowed) {
+                awayStartTime.current = null;
+                prevWasAllowed.current = true;
+                return;
+            }
+
+            // 직전이 허용 사이트였으면 tabSwitch/rapidSwitch 카운트 제외
+            const fromAllowed = prevWasAllowed.current;
+            prevWasAllowed.current = false;
+
             const isRapid =
+                !fromAllowed &&
                 lastSwitchTime.current !== null &&
                 now - lastSwitchTime.current < 3000;
             lastSwitchTime.current = now;
 
-            // 탭 이탈 시간 계산
-            let awaySeconds = 0;
-            if (isCurrentTab && awayStartTime.current) {
-                awaySeconds = Math.floor((now - awayStartTime.current) / 1000);
-                awayStartTime.current = null;
-            } else if (!isCurrentTab && !awayStartTime.current) {
-                awayStartTime.current = now;
-            }
+            if (!awayStartTime.current) awayStartTime.current = now;
 
-            setTabStats((prev) => ({
-                ...prev,
-                tabSwitch: prev.tabSwitch + 1,
-                rapidSwitch: isRapid ? prev.rapidSwitch + 1 : prev.rapidSwitch,
-                blockedAccess: blocked
-                    ? prev.blockedAccess + 1
-                    : prev.blockedAccess,
-                tabAway: prev.tabAway + awaySeconds,
-            }));
+            if (!fromAllowed) {
+                setTabStats((prev) => ({
+                    ...prev,
+                    tabSwitch: prev.tabSwitch + 1,
+                    rapidSwitch: isRapid
+                        ? prev.rapidSwitch + 1
+                        : prev.rapidSwitch,
+                    blockedAccess: blocked
+                        ? prev.blockedAccess + 1
+                        : prev.blockedAccess,
+                }));
+            }
         };
 
         window.addEventListener("message", handleMessage);
         return () => window.removeEventListener("message", handleMessage);
-    }, [running]); // running 바뀔 때마다 리스너 갱신
+    }, [running]);
 
     return { tabStats, reset };
 }

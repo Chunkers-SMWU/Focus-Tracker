@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styles from "./SignupPage.module.css";
+import { signup } from "../api/authApi";
 
 export default function SignupPage({ onSignupComplete, onBack }) {
     const [form, setForm] = useState({
@@ -30,22 +31,11 @@ export default function SignupPage({ onSignupComplete, onBack }) {
         setError("");
 
         try {
-            const res = await fetch("http://localhost:8080/api/auth/signup", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, birth, phone, id, password }),
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                alert("회원가입이 완료되었습니다!");
-                onSignupComplete();
-            } else {
-                setError(data.message || "회원가입에 실패했습니다.");
-            }
+            await signup({ name, birth, phone, id, password });
+            alert("회원가입이 완료되었습니다!");
+            onSignupComplete();
         } catch (e) {
-            setError("서버에 연결할 수 없습니다.");
+            setError(e.message || "서버에 연결할 수 없습니다.");
         }
     };
 

@@ -1,63 +1,51 @@
-import styles from "./ModeSelectPage.module.css";
+import styles from "./SessionSelectPage.module.css";
 
-const modeCards = [
+const cards = [
     {
-        key: "강의",
-        label: "강의시청",
-        desc: "영상 강의에 집중할 때\n엄격한 탭 이탈 감지",
+        key: "session",
+        label: "세션 시작",
+        desc: "집중 모드를 선택하고\n새로운 세션을 시작합니다",
         color: "#2563eb",
         bg: "#eff6ff",
         border: "#bfdbfe",
+        icon: "🎯",
     },
     {
-        key: "자료",
-        label: "자료검색",
-        desc: "검색은 허용하되\n유해 사이트만 차단",
-        color: "#16a34a",
-        bg: "#f0fdf4",
-        border: "#bbf7d0",
-    },
-    {
-        key: "잠금",
-        label: "잠금",
-        desc: "최고 강도 집중 모드\n모든 이탈 즉시 경고",
-        color: "#dc2626",
-        bg: "#fef2f2",
-        border: "#fecaca",
+        key: "mypage",
+        label: "마이 페이지",
+        desc: "지난 세션 기록을\n달력으로 확인합니다",
+        color: "#7c3aed",
+        bg: "#f5f3ff",
+        border: "#ddd6fe",
+        icon: "📅",
     },
 ];
 
-const modeIcons = {
-    강의: "🎓",
-    자료: "🔍",
-    잠금: "🔒",
-};
-
-export default function ModeSelectPage({ onSelect }) {
+export default function SessionSelectPage({ onSession, onMyPage }) {
     return (
         <div className={styles.container}>
-            {/* 타이틀 */}
             <p className={styles.brand}>Focus Tracker</p>
-            <h1 className={styles.title}>모드를 선택하세요</h1>
-            <p className={styles.subtitle}>
-                선택한 모드로 집중 세션이 시작됩니다
-            </p>
+            <h1 className={styles.title}>무엇을 하시겠어요?</h1>
+            <p className={styles.subtitle}>원하는 항목을 선택하세요</p>
 
-            {/* 카드 그리드 */}
             <div className={styles.grid}>
-                {modeCards.map((card) => (
-                    <ModeCard key={card.key} card={card} onSelect={onSelect} />
+                {cards.map((card) => (
+                    <SelectCard
+                        key={card.key}
+                        card={card}
+                        onSelect={card.key === "session" ? onSession : onMyPage}
+                    />
                 ))}
             </div>
         </div>
     );
 }
 
-function ModeCard({ card, onSelect }) {
+function SelectCard({ card, onSelect }) {
     return (
         <button
             className={styles.card}
-            onClick={() => onSelect(card.key)}
+            onClick={onSelect}
             onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-4px)";
                 e.currentTarget.style.boxShadow =
@@ -70,10 +58,7 @@ function ModeCard({ card, onSelect }) {
                 e.currentTarget.style.borderColor = "#e5e5e5";
             }}
         >
-            {/* 모드 이름 */}
             <div className={styles.cardLabel}>{card.label}</div>
-
-            {/* 이미지 Placeholder */}
             <div
                 className={styles.cardImage}
                 style={{
@@ -81,10 +66,8 @@ function ModeCard({ card, onSelect }) {
                     border: `1px solid ${card.border}`,
                 }}
             >
-                <span className={styles.cardIcon}>{modeIcons[card.key]}</span>
+                <span className={styles.cardIcon}>{card.icon}</span>
             </div>
-
-            {/* 설명 + 화살표 */}
             <div className={styles.cardFooter}>
                 <p className={styles.cardDesc}>{card.desc}</p>
                 <span

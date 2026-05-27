@@ -1,7 +1,12 @@
 import { useState } from "react";
 import styles from "./BlockedSiteList.module.css";
 
-export default function BlockedSiteList({ sites, onAdd, onRemove }) {
+export default function BlockedSiteList({
+    sites,
+    onAdd,
+    onRemove,
+    placeholder,
+}) {
     const [input, setInput] = useState("");
 
     const handleAdd = () => {
@@ -32,7 +37,7 @@ export default function BlockedSiteList({ sites, onAdd, onRemove }) {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-                    placeholder="차단할 사이트 입력 (예: tiktok.com)"
+                    placeholder={placeholder}
                 />
                 <button className={styles.addBtn} onClick={handleAdd}>
                     + 추가

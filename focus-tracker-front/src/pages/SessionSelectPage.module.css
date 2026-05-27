@@ -9,7 +9,6 @@
     font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
 }
 
-/* 타이틀 */
 .brand {
     font-size: 12px;
     font-weight: 600;
@@ -35,16 +34,14 @@
     text-align: center;
 }
 
-/* 카드 그리드 */
 .grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 24px;
     width: 100%;
-    max-width: 890px;
+    max-width: 600px;
 }
 
-/* 카드 */
 .card {
     min-height: 360px;
     display: flex;
@@ -85,7 +82,7 @@
 }
 
 .cardIcon {
-    font-size: 28px;
+    font-size: 48px;
 }
 
 .cardFooter {
@@ -102,6 +99,7 @@
     line-height: 1.6;
     margin: 0;
     white-space: pre-line;
+    text-align: center;
 }
 
 .cardArrow {

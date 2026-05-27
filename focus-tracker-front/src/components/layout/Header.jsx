@@ -5,29 +5,36 @@ const modeNavItems = {
     강의: { icon: "🎓", label: "강의시청" },
     자료: { icon: "🔍", label: "자료검색" },
     잠금: { icon: "🔒", label: "잠금" },
-    휴식: { icon: "😴", label: "휴식" },
 };
 
 export default function Header({
     currentMode,
     onModeSelect,
+    modeChangeable,
     onSettingsOpen,
+    onMyPageOpen,
     onLogout,
+    onGoMain,
 }) {
     const [hovered, setHovered] = useState(false);
+    const handleMouseEnter = () => {
+        if (modeChangeable) setHovered(true);
+    };
+    const handleMouseLeave = () => setHovered(false);
 
     return (
         <header className={styles.header}>
             {/* 로고 */}
-            <span className={styles.logo}>Focus-Tracker</span>
+            <span className={styles.logo} onClick={onGoMain}>
+                Focus-Tracker
+            </span>
 
             {/* 모드 탭 */}
             <nav
-                className={styles.nav}
-                onMouseEnter={() => setHovered(true)}
-                onMouseLeave={() => setHovered(false)}
+                className={`${styles.nav} ${!modeChangeable ? styles.navLocked : ""}`}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
                 style={{
-                    // hovered 기반 동적 값
                     gap: hovered ? 4 : 0,
                     transition: "gap 0.4s ease",
                 }}
@@ -35,7 +42,6 @@ export default function Header({
                 <div
                     className={styles.modeLabel}
                     style={{
-                        // hovered 기반 동적 값
                         width: hovered ? 0 : 72,
                         opacity: hovered ? 0 : 1,
                         transition: "width 0.4s ease, opacity 0.2s ease",
@@ -47,10 +53,9 @@ export default function Header({
                 {Object.entries(modeNavItems).map(([mode, { icon, label }]) => (
                     <button
                         key={mode}
-                        onClick={() => onModeSelect(mode)}
-                        className={styles.modeBtn}
+                        onClick={() => modeChangeable && onModeSelect(mode)}
+                        className={`${styles.modeBtn} ${!modeChangeable ? styles.modeBtnLocked : ""}`}
                         style={{
-                            // hovered/currentMode 기반 동적 값
                             maxWidth: hovered ? 120 : 0,
                             opacity: hovered ? 1 : 0,
                             padding: hovered ? "6px 16px" : "6px 0",
@@ -77,6 +82,9 @@ export default function Header({
             <div className={styles.btnGroup}>
                 <button className={styles.headerBtn} onClick={onSettingsOpen}>
                     Settings
+                </button>
+                <button className={styles.headerBtn} onClick={onMyPageOpen}>
+                    My Page
                 </button>
                 <button className={styles.headerBtn} onClick={onLogout}>
                     로그아웃
