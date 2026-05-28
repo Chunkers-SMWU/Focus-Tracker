@@ -4,3 +4,7 @@ Downloads/
 SEWOO/
 baseCode_Capstone/
 NetworkProtocolTermProject/
+node_modules/
+build/
+.gradle/
+node_modules/
