@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/focus_tracker?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: pass1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update     # 첫 실행 후 update로 변경하기
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+    show-sql: true
+
+jwt:
+  secret: focus-tracker-secret-key-must-be-at-least-32-characters-long!!
+  expiration: 86400000        # 24시간 (ms)
