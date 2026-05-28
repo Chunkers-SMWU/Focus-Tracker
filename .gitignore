@@ -5,9 +5,7 @@ SEWOO/
 baseCode_Capstone/
 NetworkProtocolTermProject/
 node_modules/
-build/
-.gradle/
-node_modules/
-.gradle/
-build/
-demo/
+demo/build/
+demo/.gradle/
+focus-tracker-back/build/
+focus-tracker-back/.gradle/
