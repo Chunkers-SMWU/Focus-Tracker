@@ -1,32 +1,5 @@
 import styles from "./FocusTimeChart.module.css";
 
-const SIZE = 160;
-const STROKE = 13;
-const R = (SIZE - STROKE) / 2;
-const CX = SIZE / 2;
-const CY = SIZE / 2;
-
-const START_DEG = 225;
-const TOTAL_DEG = 270;
-const END_DEG = START_DEG + TOTAL_DEG;
-const CHART_HEIGHT = 160;
-
-const PCT_TOP = `${(CY / CHART_HEIGHT) * 100}%`;
-
-function polarToXY(cx, cy, r, deg) {
-    const rad = ((deg - 90) * Math.PI) / 180;
-    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-}
-
-function arcPath(cx, cy, r, startDeg, endDeg) {
-    const s = polarToXY(cx, cy, r, startDeg);
-    const e = polarToXY(cx, cy, r, endDeg);
-    const large = endDeg - startDeg > 180 ? 1 : 0;
-    return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y}`;
-}
-
-const TRACK_PATH = arcPath(CX, CY, R, START_DEG, END_DEG);
-
 function fmt(sec) {
     const m = Math.floor(sec / 60)
         .toString()
@@ -37,6 +10,12 @@ function fmt(sec) {
     return `${m}:${s}`;
 }
 
+const ITEMS = [
+    { key: "focusSec", label: "집중", color: "#2563eb" },
+    { key: "totalSec", label: "전체", color: "#888" },
+    { key: "nonFocusSec", label: "비집중", color: "#dc2626" },
+];
+
 export default function FocusTimeChart({
     totalSeconds = 0,
     focusSeconds = 0,
@@ -45,99 +24,39 @@ export default function FocusTimeChart({
     const totalSec = Math.floor(totalSeconds);
     const focusSec = Math.floor(focusSeconds);
     const nonFocusSec = Math.floor(nonFocusSeconds);
-
-    const ratio = totalSec > 0 ? Math.min(focusSec / totalSec, 1) : 0;
-    const pct = Math.round(ratio * 100);
-    const fillDeg = ratio * TOTAL_DEG;
-
-    const fillPath =
-        fillDeg >= TOTAL_DEG
-            ? TRACK_PATH
-            : fillDeg > 0
-              ? arcPath(CX, CY, R, START_DEG, START_DEG + fillDeg)
-              : null;
-
     const hasData = totalSec > 0;
+
+    const values = {
+        focusSec: hasData ? fmt(focusSec) : "--:--",
+        totalSec: hasData ? fmt(totalSec) : "--:--",
+        nonFocusSec: hasData ? fmt(nonFocusSec) : "--:--",
+    };
 
     return (
         <div className={styles.card}>
             <div className={styles.cardTitle}>집중 시간</div>
-            <div className={styles.legendRow}>
-                <Legend color="#2563eb" label="집중" />
-                <Legend color="#e5e5e5" label="비집중" />
-            </div>
-
-            <div className={styles.chartWrap}>
-                <div
-                    className={styles.chartInner}
-                    style={{ width: SIZE, height: CHART_HEIGHT }}
-                >
-                    <svg
-                        width={SIZE}
-                        height={CHART_HEIGHT}
-                        viewBox={`0 0 ${SIZE} ${CHART_HEIGHT}`}
-                        style={{ overflow: "visible" }}
+            <div className={styles.list}>
+                {ITEMS.map((item, i) => (
+                    <div
+                        key={item.key}
+                        className={styles.row}
+                        style={{
+                            borderBottom:
+                                i < ITEMS.length - 1
+                                    ? "1px solid #f5f5f5"
+                                    : "none",
+                        }}
                     >
-                        <path
-                            d={TRACK_PATH}
-                            fill="none"
-                            stroke="#e5e5e5"
-                            strokeWidth={STROKE}
-                            strokeLinecap="round"
-                        />
-                        {fillPath && (
-                            <path
-                                d={fillPath}
-                                fill="none"
-                                stroke="#2563eb"
-                                strokeWidth={STROKE}
-                                strokeLinecap="round"
-                            />
-                        )}
-                    </svg>
-                    <div className={styles.pctLabel} style={{ top: PCT_TOP }}>
-                        {hasData ? `${pct}%` : "—"}
+                        <span className={styles.rowLabel}>{item.label}</span>
+                        <span
+                            className={styles.rowValue}
+                            style={{ color: item.color }}
+                        >
+                            {values[item.key]}
+                        </span>
                     </div>
-                </div>
+                ))}
             </div>
-
-            <div className={styles.timeRow}>
-                <TimeBox
-                    label="집중"
-                    value={hasData ? fmt(focusSec) : "--:--"}
-                    color="#2563eb"
-                />
-                <TimeBox
-                    label="전체"
-                    value={hasData ? fmt(totalSec) : "--:--"}
-                    color="#888"
-                />
-                <TimeBox
-                    label="비집중"
-                    value={hasData ? fmt(nonFocusSec) : "--:--"}
-                    color="#dc2626"
-                />
-            </div>
-        </div>
-    );
-}
-
-function Legend({ color, label }) {
-    return (
-        <div className={styles.legend}>
-            <span className={styles.legendDot} style={{ background: color }} />
-            {label}
-        </div>
-    );
-}
-
-function TimeBox({ label, value, color }) {
-    return (
-        <div className={styles.timeBox}>
-            <span className={styles.timeLabel}>{label}</span>
-            <span className={styles.timeValue} style={{ color }}>
-                {value}
-            </span>
         </div>
     );
 }

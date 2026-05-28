@@ -1,3 +1,4 @@
+import { useState } from "react";
 import styles from "./ReportPage.module.css";
 
 const modeLabels = {
@@ -13,6 +14,222 @@ const modeColors = {
     휴식: "#9333ea",
 };
 
+const MODE_CONFIG = {
+    강의: { noFace: true, headTurn: true, eyeClosed: true, blink: true },
+    자료: { noFace: false, headTurn: true, eyeClosed: true, blink: true },
+    잠금: { noFace: true, headTurn: true, eyeClosed: true, blink: true },
+};
+
+function buildMetrics(s, currentMode) {
+    const cfg = MODE_CONFIG[currentMode] ?? MODE_CONFIG["강의"];
+    return [
+        {
+            key: "noFace",
+            value: s?.noFaceSeconds ?? null,
+            active: cfg.noFace,
+            thresholds: { warn: 10, danger: 20 },
+            inverse: true,
+        },
+        {
+            key: "headTurn",
+            value: s?.headTurnCount ?? null,
+            active: cfg.headTurn,
+            thresholds: { warn: 2, danger: 3 },
+            inverse: true,
+        },
+        {
+            key: "eyeClosed",
+            value: s?.eyeClosedSeconds ?? null,
+            active: cfg.eyeClosed,
+            thresholds: { warn: 3, danger: 10 },
+            inverse: true,
+        },
+        {
+            key: "blink",
+            value: s?.blinkRate ?? 0,
+            active: cfg.blink,
+            thresholds: { warn: 10, danger: 8 },
+            inverse: false,
+            lowIsBad: true,
+        },
+    ];
+}
+
+function getColor(metric) {
+    if (!metric.active) return "#e5e5e5";
+    const v = metric.value;
+    if (v === null) return "#d1d5db";
+    const { warn, danger } = metric.thresholds;
+    let isWarn, isDanger;
+    if (metric.lowIsBad) {
+        isDanger = v < danger;
+        isWarn = !isDanger && v < warn;
+    } else if (metric.inverse) {
+        isDanger = v >= danger;
+        isWarn = !isDanger && v >= warn;
+    } else {
+        isDanger = v < danger;
+        isWarn = !isDanger && v < warn;
+    }
+    if (isDanger) return "#ef4444";
+    if (isWarn) return "#f97316";
+    return "#22c55e";
+}
+
+function calcOverall(metrics, result) {
+    const active = metrics.filter((m) => m.active && m.value !== null);
+    const scores = active.map((m) => {
+        const c = getColor(m);
+        if (c === "#ef4444") return 0;
+        if (c === "#f97316") return 50;
+        return 100;
+    });
+    const base =
+        scores.length > 0
+            ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+            : 100;
+    const penalties =
+        (result?.eyesClosed ? 20 : 0) +
+        (result?.mouthOpen ? 5 : 0) +
+        (result?.alert ? 10 : 0) +
+        (result?.headTilted ? 5 : 0) +
+        (result?.blinkState === "DROWSY" ? 20 : 0) +
+        (result?.blinkState === "LOW_FOCUS" ? 10 : 0);
+    return Math.max(0, base - penalties);
+}
+
+// 종합 집중도 링
+function OverallRing({ score }) {
+    const size = 200;
+    const r = 76;
+    const sw = 12;
+    const c = size / 2;
+    const circumference = 2 * Math.PI * r;
+    const offset = circumference * (1 - (score !== null ? score / 100 : 0));
+    const color =
+        score === null
+            ? "#d1d5db"
+            : score >= 80
+              ? "#22c55e"
+              : score >= 50
+                ? "#f97316"
+                : "#ef4444";
+
+    return (
+        <div className={styles.overallRing}>
+            <div style={{ position: "relative", width: size, height: size }}>
+                <svg
+                    width={size}
+                    height={size}
+                    viewBox={`0 0 ${size} ${size}`}
+                    style={{ transform: "rotate(-90deg)" }}
+                >
+                    <circle
+                        cx={c}
+                        cy={c}
+                        r={r}
+                        fill="none"
+                        stroke="#f0f0f0"
+                        strokeWidth={sw}
+                    />
+                    <circle
+                        cx={c}
+                        cy={c}
+                        r={r}
+                        fill="none"
+                        stroke={color}
+                        strokeWidth={sw}
+                        strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        style={{
+                            transition:
+                                "stroke-dashoffset 0.6s ease, stroke 0.4s ease",
+                        }}
+                    />
+                </svg>
+                <div className={styles.overallRingInner}>
+                    <span className={styles.overallScore} style={{ color }}>
+                        {score !== null ? `${score}` : "—"}
+                    </span>
+                    {score !== null && (
+                        <span className={styles.overallScoreUnit}>/100</span>
+                    )}
+                </div>
+            </div>
+            <span className={styles.overallLabel}>종합 집중도</span>
+        </div>
+    );
+}
+
+const STEP_LABELS = { 1: "1단계", 2: "2단계", 3: "3단계" };
+const STEP_COLORS = { 1: "#f97316", 2: "#ef4444", 3: "#dc2626" };
+
+// 경고 기록 섹션
+function AlertLogSection({ alertLog }) {
+    const [expanded, setExpanded] = useState(false);
+    const count = alertLog?.length ?? 0;
+
+    return (
+        <Section title="경고 기록">
+            <Row label="총 경고 횟수">
+                <span
+                    className={styles.rowValue}
+                    style={{ color: count > 0 ? "#ef4444" : "#1a1a1a" }}
+                >
+                    {count}회
+                </span>
+            </Row>
+            {count > 0 && (
+                <div className={styles.alertLogToggleRow}>
+                    <button
+                        className={styles.alertLogToggleBtn}
+                        onClick={() => setExpanded((p) => !p)}
+                    >
+                        경고 항목 보기 {expanded ? "▲" : "▼"}
+                    </button>
+                </div>
+            )}
+            {expanded && (
+                <div className={styles.alertLogList}>
+                    {alertLog.map((log, i) => (
+                        <div key={i} className={styles.alertLogItem}>
+                            <div className={styles.alertLogItemHeader}>
+                                <span
+                                    className={styles.alertLogStep}
+                                    style={{ color: STEP_COLORS[log.step] }}
+                                >
+                                    {STEP_LABELS[log.step]} 경고
+                                </span>
+                                <span className={styles.alertLogTime}>
+                                    {new Date(log.timestamp).toLocaleTimeString(
+                                        "ko-KR",
+                                        {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                            second: "2-digit",
+                                        },
+                                    )}
+                                </span>
+                            </div>
+                            <div className={styles.alertLogTags}>
+                                {log.triggeredItems.map((item) => (
+                                    <span
+                                        key={item}
+                                        className={styles.alertLogTag}
+                                    >
+                                        {item}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </Section>
+    );
+}
+
 function fmt(sec) {
     if (!sec) return "—";
     const m = Math.floor(sec / 60)
@@ -24,8 +241,15 @@ function fmt(sec) {
     return `${m}:${s}`;
 }
 
-export default function ReportPage({ currentMode, snapshot, onRestart }) {
+export default function ReportPage({
+    currentMode,
+    snapshot,
+    onModeChange,
+    onExit,
+}) {
     const s = snapshot ?? {};
+    const metrics = buildMetrics(s, currentMode);
+    const overall = calcOverall(metrics, s);
 
     return (
         <div className={styles.container}>
@@ -37,6 +261,11 @@ export default function ReportPage({ currentMode, snapshot, onRestart }) {
                     <p className={styles.subtitle}>
                         오늘의 집중 세션이 종료되었습니다
                     </p>
+                </div>
+
+                {/* 종합 집중도 */}
+                <div className={styles.overallRow}>
+                    <OverallRing score={overall} />
                 </div>
 
                 {/* 세션 요약 */}
@@ -66,33 +295,13 @@ export default function ReportPage({ currentMode, snapshot, onRestart }) {
                     </Row>
                     <Row label="집중도" last>
                         <span className={styles.rowValue}>
-                            {s.totalSeconds > 0
-                                ? `${Math.round((s.focusSeconds / s.totalSeconds) * 100)}%`
-                                : "—"}
+                            {overall !== null ? `${overall}점` : "—"}
                         </span>
                     </Row>
                 </Section>
 
-                {/* 지표별 상세 */}
-                <Section title="지표별 상세">
-                    <Row label="깜빡임">
-                        <span className={styles.rowValue}>
-                            {s.blinkRate != null ? `${s.blinkRate}회/분` : "—"}
-                        </span>
-                    </Row>
-                    <Row label="눈 감김 누적 시간">
-                        <span className={styles.rowValue}>
-                            {fmt(s.eyeClosedSeconds)}
-                        </span>
-                    </Row>
-                    <Row label="고개 기울기 횟수" last>
-                        <span className={styles.rowValue}>
-                            {s.headTiltCount != null
-                                ? `${s.headTiltCount}회`
-                                : "—"}
-                        </span>
-                    </Row>
-                </Section>
+                {/* 경고 기록 */}
+                <AlertLogSection alertLog={s.alertLog} />
 
                 {/* 총평 */}
                 <Section title="총평">
@@ -102,10 +311,13 @@ export default function ReportPage({ currentMode, snapshot, onRestart }) {
                     </p>
                 </Section>
 
-                {/* 처음으로 버튼 */}
+                {/* 버튼 행 */}
                 <div className={styles.btnRow}>
-                    <button className={styles.restartBtn} onClick={onRestart}>
-                        처음으로
+                    <button className={styles.modeBtn} onClick={onModeChange}>
+                        모드 변경
+                    </button>
+                    <button className={styles.logoutBtn} onClick={onExit}>
+                        종료하기
                     </button>
                 </div>
             </div>

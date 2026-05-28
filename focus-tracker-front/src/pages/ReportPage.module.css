@@ -25,7 +25,7 @@
 }
 
 .brand {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: #2563eb;
     letter-spacing: 0.12em;
@@ -34,7 +34,7 @@
 }
 
 .title {
-    font-size: 26px;
+    font-size: 32px;
     font-weight: 700;
     color: #1a1a1a;
     letter-spacing: -0.02em;
@@ -42,13 +42,52 @@
 }
 
 .subtitle {
-    font-size: 13px;
+    font-size: 14px;
     color: #888;
+}
+
+/* 종합 집중도 링 */
+.overallRow {
+    display: flex;
+    justify-content: center;
+}
+
+.overallRing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.overallRingInner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.overallScore {
+    font-size: 40px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.overallScoreUnit {
+    font-size: 14px;
+    color: #bbb;
+}
+
+.overallLabel {
+    font-size: 14px;
+    color: #999;
 }
 
 /* Section */
 .sectionLabel {
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 600;
     color: #666;
     text-transform: uppercase;
@@ -60,7 +99,7 @@
     background: #fff;
     border: 1px solid #e5e5e5;
     border-radius: 12px;
-    padding: 0 1.25rem;
+    padding: 4px 20px;
 }
 
 /* Row */
@@ -68,8 +107,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 7px 0;
-    font-size: 13px;
+    padding: 6px 0;
+    font-size: 14px;
 }
 
 .rowBorder {
@@ -82,6 +121,7 @@
 
 .rowValue {
     font-weight: 600;
+    color: #1a1a1a;
 }
 
 .rowValueBlue {
@@ -96,7 +136,7 @@
 
 /* 총평 */
 .comment {
-    font-size: 13px;
+    font-size: 16px;
     color: #888;
     line-height: 1.8;
     margin: 0;
@@ -107,23 +147,117 @@
 /* 버튼 */
 .btnRow {
     display: flex;
+    gap: 8px;
     justify-content: center;
     margin-top: 16px;
 }
 
-.restartBtn {
-    padding: 9px 48px;
+.modeBtn {
+    padding: 10px 36px;
+    background: #fff;
+    color: #2563eb;
+    border: 1px solid #2563eb;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+.modeBtn:hover {
+    background: #eff6ff;
+}
+
+.logoutBtn {
+    padding: 10px 36px;
     background: #2563eb;
     color: #fff;
     border: none;
     border-radius: 10px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
     transition: background 0.15s ease;
 }
 
-.restartBtn:hover {
+.logoutBtn:hover {
     background: #1d4ed8;
+}
+
+/* 경고 기록 */
+.alertLogToggleRow {
+    display: flex;
+    justify-content: center;
+    padding: 6px 0 2px;
+    border-top: 1px solid #f5f5f5;
+}
+
+.alertLogToggleBtn {
+    background: none;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2563eb;
+    cursor: pointer;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+}
+
+.alertLogToggleBtn:hover {
+    background: #eff6ff;
+}
+
+.alertLogList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 0 4px;
+    border-top: 1px solid #f5f5f5;
+}
+
+.alertLogItem {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.alertLogItemHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.alertLogStep {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.alertLogTime {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.alertLogTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.alertLogTag {
+    font-size: 12px;
+    font-weight: 500;
+    color: #555;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 20px;
+    padding: 2px 8px;
 }

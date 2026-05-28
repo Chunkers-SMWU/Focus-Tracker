@@ -1,5 +1,5 @@
 package com.example.back.daily.controller;
-
+import java.util.List;
 import com.example.back.daily.dto.DailyResDto;
 import com.example.back.daily.service.DailyService;
 import lombok.RequiredArgsConstructor;
@@ -15,11 +15,17 @@ public class DailyController {
 
     private final DailyService dailyService;
 
-    // 오늘 마이페이지 통계 조회
-    // GET /api/daily/mypage
     @GetMapping("/daily")
     public ResponseEntity<DailyResDto> getMyPageStats(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(dailyService.getTodayStats(userDetails.getUsername()));
+            @AuthenticationPrincipal String loginId) {  // UserDetails → String
+        return ResponseEntity.ok(dailyService.getTodayStats(loginId));  // getUsername() 제거
+    }
+
+    @GetMapping("/calendar")
+    public ResponseEntity<List<DailyResDto>> getCalendar(
+            @AuthenticationPrincipal String loginId,  // UserDetails → String
+            @RequestParam int year,
+            @RequestParam int month) {
+        return ResponseEntity.ok(dailyService.getMonthlyStats(loginId, year, month));
     }
 }

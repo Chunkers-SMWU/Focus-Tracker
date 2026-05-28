@@ -18,6 +18,7 @@
     letter-spacing: -0.02em;
     flex-shrink: 0;
     font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    cursor: pointer;
 }
 
 /* 모드 탭 */
@@ -31,7 +32,10 @@
     border-radius: 999px;
     padding: 4px 6px;
     overflow: hidden;
-    /* gap, transition은 인라인으로 — hovered 기반 동적 값 */
+}
+
+.navLocked {
+    cursor: not-allowed;
 }
 
 .modeLabel {
@@ -46,7 +50,6 @@
     letter-spacing: 0.1em;
     font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
     white-space: nowrap;
-    /* width, opacity, transition은 인라인으로 — hovered 기반 동적 값 */
 }
 
 .modeBtn {
@@ -60,7 +63,10 @@
     font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
     white-space: nowrap;
     overflow: hidden;
-    /* maxWidth, opacity, padding, fontWeight, background, color, transition은 인라인으로 — hovered/currentMode 기반 동적 값 */
+}
+
+.modeBtnLocked {
+    cursor: not-allowed;
 }
 
 /* 우측 버튼 그룹 */

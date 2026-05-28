@@ -1,15 +1,16 @@
 import styles from "./OptionToggles.module.css";
 
-export default function OptionToggles({
-    options,
-    onChange,
-    currentMode,
-    restMinutes,
-    onRestMinutesChange,
-}) {
+export default function OptionToggles({ options, onChange, currentMode }) {
     return (
         <div>
-            <div className={`${styles.row} ${styles.rowBorder}`}>
+            <div
+                className={styles.row}
+                style={{
+                    // currentMode 기반 동적 값
+                    borderBottom:
+                        currentMode === "휴식" ? "1px solid #f5f5f5" : "none",
+                }}
+            >
                 <div>
                     <div className={styles.rowTitle}>2회 접속 시 허용 팝업</div>
                     <div className={styles.rowDesc}>
@@ -22,52 +23,6 @@ export default function OptionToggles({
                     onChange={(v) => onChange("allowPopup", v)}
                 />
             </div>
-
-            <div
-                className={styles.row}
-                style={{
-                    // currentMode 기반 동적 값
-                    borderBottom:
-                        currentMode === "휴식" ? "1px solid #f5f5f5" : "none",
-                }}
-            >
-                <div>
-                    <div className={styles.rowTitle}>
-                        iframe 내 외부 링크 차단
-                    </div>
-                    <div className={styles.rowDesc}>
-                        설정된 공부 사이트 안에서 외부 링크 접속 시 페이지 Block
-                    </div>
-                </div>
-                <Toggle
-                    checked={options.iframeBlock}
-                    onChange={(v) => onChange("iframeBlock", v)}
-                />
-            </div>
-
-            {currentMode === "휴식" && (
-                <div className={styles.row}>
-                    <div>
-                        <div className={styles.rowTitle}>휴식 시간 제한</div>
-                        <div className={styles.rowDesc}>
-                            타이머 종료 시 집중 모드 복귀 알림
-                        </div>
-                    </div>
-                    <div className={styles.restInputRow}>
-                        <input
-                            type="number"
-                            min={1}
-                            max={60}
-                            value={restMinutes}
-                            onChange={(e) =>
-                                onRestMinutesChange(e.target.value)
-                            }
-                            className={styles.restInput}
-                        />
-                        <span className={styles.restUnit}>분</span>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,31 +30,16 @@ public class SessionService {
         User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
 
-        // 세션 저장
         Session session = Session.builder()
                 .user(user)
                 .mode(dto.getMode())
                 .focusTime(dto.getFocusTime())
                 .nonFocusTime(dto.getNonFocusTime())
                 .totalTime(dto.getTotalTime())
-                .yawnCount(dto.getYawnCount())
-                .poseCount(dto.getPoseCount())
-                .blinkRate(dto.getBlinkRate())
-                .headTurnCount(dto.getHeadTurnCount())
-                .eyeCloseTime(dto.getEyeCloseTime())
-                .headDownCount(dto.getHeadDownCount())
-                .focusScore(dto.getFocusScore())
-                .tabSwitchCount(dto.getTabSwitchCount())
-                .tabLeaveTime(dto.getTabLeaveTime())
-                .shortSwitchCount(dto.getShortSwitchCount())
-                .unauthorizedAccessCount(dto.getUnauthorizedAccessCount())
                 .build();
 
         SessionResDto result = SessionResDto.from(sessionRepository.save(session));
-
-        // Daily 업데이트
         updateDaily(user, dto);
-
         return result;
     }
 
@@ -69,12 +55,8 @@ public class SessionService {
                         .build());
 
         int newSessionCount = daily.getSessionCount() + 1;
-
-        // 종합 집중도: 기존 평균에 새 세션 focusScore 반영
         double newAvgFocusScore = (daily.getAvgFocusScore() * daily.getSessionCount() + dto.getFocusScore()) / newSessionCount;
-        // 최대 집중 시간: 기존 최댓값 vs 새 세션 focusTime
         int newMaxFocusTime = Math.max(daily.getMaxFocusTime(), dto.getFocusTime());
-        // 세션 이용 시간: 누적 합산
         int newTotalSessionTime = daily.getTotalSessionTime() + dto.getTotalTime();
 
         daily.update(
@@ -87,13 +69,15 @@ public class SessionService {
         dailyRepository.save(daily);
     }
 
-    public List<SessionResDto> getSessionHistory(String loginId) {
+    public Map<String, List<SessionResDto>> getSessionHistory(String loginId) {
         User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
 
         return sessionRepository.findByUserOrderByCreatedAtDesc(user)
                 .stream()
-                .map(SessionResDto::from)
-                .collect(Collectors.toList());
+                .collect(Collectors.groupingBy(
+                        session -> session.getStartedAt().toLocalDate().toString(),
+                        Collectors.mapping(SessionResDto::from, Collectors.toList())
+                ));
     }
 }

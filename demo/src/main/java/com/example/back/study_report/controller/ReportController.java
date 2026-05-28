@@ -15,11 +15,10 @@ public class ReportController {
 
     private final ReportService reportService;
 
-    // 일간 리포트 - GET /api/report/daily
     @GetMapping("/report")
     public ResponseEntity<ReportResDTO> getDaily(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(reportService.getDaily(userDetails.getUsername()));
+            @AuthenticationPrincipal String loginId) {  // UserDetails → String
+        return ResponseEntity.ok(reportService.getDaily(loginId));
     }
 
 /*    // 주간 리포트 - GET /api/report/weekly

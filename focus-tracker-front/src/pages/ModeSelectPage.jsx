@@ -2,7 +2,7 @@ import styles from "./ModeSelectPage.module.css";
 
 const modeCards = [
     {
-        key: "강의",
+        key: "강의시청",
         label: "강의시청",
         desc: "영상 강의에 집중할 때\n엄격한 탭 이탈 감지",
         color: "#2563eb",
@@ -10,7 +10,7 @@ const modeCards = [
         border: "#bfdbfe",
     },
     {
-        key: "자료",
+        key: "자료검색",
         label: "자료검색",
         desc: "검색은 허용하되\n유해 사이트만 차단",
         color: "#16a34a",
@@ -25,21 +25,12 @@ const modeCards = [
         bg: "#fef2f2",
         border: "#fecaca",
     },
-    {
-        key: "휴식",
-        label: "휴식",
-        desc: "시간 제한만 적용\n자유롭게 쉬는 시간",
-        color: "#9333ea",
-        bg: "#faf5ff",
-        border: "#e9d5ff",
-    },
 ];
 
 const modeIcons = {
     강의: "🎓",
     자료: "🔍",
     잠금: "🔒",
-    휴식: "😴",
 };
 
 export default function ModeSelectPage({ onSelect }) {

@@ -1,5 +1,5 @@
 package com.example.back.daily.service;
-
+import java.util.List;
 import com.example.back.daily.dto.DailyResDto;
 import com.example.back.daily.entity.Daily;
 import com.example.back.daily.repository.DailyRepository;
@@ -7,7 +7,7 @@ import com.example.back.user.entity.User;
 import com.example.back.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
+import java.util.stream.Collectors;
 import java.time.LocalDate;
 
 @Service
@@ -31,5 +31,18 @@ public class DailyService {
                         .build());
 
         return DailyResDto.from(daily);
+    }
+
+    public List<DailyResDto> getMonthlyStats(String loginId, int year, int month) {
+        User user = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
+
+        LocalDate start = LocalDate.of(year, month, 1);
+        LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
+
+        return dailyRepository.findByUserAndDateBetween(user, start, end)
+                .stream()
+                .map(DailyResDto::from)
+                .collect(Collectors.toList());
     }
 }

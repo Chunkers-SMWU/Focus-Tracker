@@ -7,7 +7,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create        # 첫 실행 후 update로 변경하기
+      ddl-auto: update     # 첫 실행 후 update로 변경하기
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect

@@ -38,7 +38,7 @@
 /* 카드 그리드 */
 .grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 24px;
     width: 100%;
     max-width: 890px;

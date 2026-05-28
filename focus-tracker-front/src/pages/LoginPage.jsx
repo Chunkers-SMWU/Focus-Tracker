@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styles from "./LoginPage.module.css";
+import { login } from "../api/authApi";
 
 export default function LoginPage({ onLogin, onGuest, onSignup }) {
     const [id, setId] = useState("");
@@ -14,23 +15,12 @@ export default function LoginPage({ onLogin, onGuest, onSignup }) {
         setError("");
 
         try {
-            const res = await fetch("http://localhost:8080/api/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, password: pw }),
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                localStorage.setItem("token", data.token);
-                localStorage.setItem("name", data.name);
-                onLogin({ id, name: data.name });
-            } else {
-                setError(data.message || "로그인에 실패했습니다.");
-            }
+            const data = await login({ id, password: pw });
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("name", data.name);
+            onLogin({ id, name: data.name });
         } catch (e) {
-            setError("서버에 연결할 수 없습니다.");
+            setError(e.message || "서버에 연결할 수 없습니다.");
         }
     };
 

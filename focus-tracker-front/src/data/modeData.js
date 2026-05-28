@@ -3,13 +3,13 @@ export const modeData = {
         label: "강의시청",
         values: {
             tabSwitch: null,
-            tabAway: 5,
+            tabAway: 10,
             rapidSwitch: 1,
             blockedAccess: 1,
         },
         units: {
             tabSwitch: null,
-            tabAway: "분",
+            tabAway: "초",
             rapidSwitch: "회",
             blockedAccess: "회",
         },
@@ -37,21 +37,6 @@ export const modeData = {
             tabAway: "초",
             rapidSwitch: "회",
             blockedAccess: "회",
-        },
-    },
-    휴식: {
-        label: "휴식(시간제한)",
-        values: {
-            tabSwitch: null,
-            tabAway: null,
-            rapidSwitch: null,
-            blockedAccess: null,
-        },
-        units: {
-            tabSwitch: null,
-            tabAway: null,
-            rapidSwitch: null,
-            blockedAccess: null,
         },
     },
 };
