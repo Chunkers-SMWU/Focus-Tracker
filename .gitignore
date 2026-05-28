@@ -8,3 +8,6 @@ node_modules/
 build/
 .gradle/
 node_modules/
+.gradle/
+build/
+demo/
