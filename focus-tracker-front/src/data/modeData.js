@@ -3,7 +3,7 @@ export const modeData = {
         label: "강의시청",
         values: {
             tabSwitch: null,
-            tabAway: 10,
+            tabAway: 300, // 파이썬 로직 기준 300초
             rapidSwitch: 1,
             blockedAccess: 1,
         },

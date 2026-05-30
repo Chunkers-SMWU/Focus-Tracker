@@ -22,18 +22,40 @@
     animation: slideUp 0.22s ease;
 }
 
+/* 단계별 배경색 */
+.modal.step1 {
+    background: #ffe4e4;
+}
+.modal.step2 {
+    background: #fecaca;
+}
+.modal.step3 {
+    background: #fca5a5;
+}
+
 .emoji {
     font-size: 48px;
     line-height: 1;
     margin-bottom: 4px;
 }
 
+/* 단계별 제목 색상 */
 .title {
     font-size: 18px;
     font-weight: 700;
     color: #1a1a1a;
     margin: 0;
     font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+}
+
+.modal.step1 .title {
+    color: #dc2626;
+}
+.modal.step2 .title {
+    color: #b91c1c;
+}
+.modal.step3 .title {
+    color: #991b1b;
 }
 
 .desc {
@@ -43,6 +65,16 @@
     text-align: center;
     line-height: 1.6;
     font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+}
+
+.modal.step1 .desc {
+    color: #6b7280;
+}
+.modal.step2 .desc {
+    color: #4b5563;
+}
+.modal.step3 .desc {
+    color: #374151;
 }
 
 .btnRow {
@@ -71,11 +103,10 @@
     color: #333;
 }
 
+/* 단계별 휴식 버튼 색상 */
 .restBtn {
     flex: 1;
     padding: 10px 0;
-    background: #2563eb;
-    color: #fff;
     border: none;
     border-radius: 10px;
     font-size: 14px;
@@ -83,10 +114,28 @@
     cursor: pointer;
     font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
     transition: background 0.15s ease;
+    color: #fff;
 }
 
-.restBtn:hover {
-    background: #1d4ed8;
+.modal.step1 .restBtn {
+    background: #ef4444;
+}
+.modal.step1 .restBtn:hover {
+    background: #dc2626;
+}
+
+.modal.step2 .restBtn {
+    background: #dc2626;
+}
+.modal.step2 .restBtn:hover {
+    background: #b91c1c;
+}
+
+.modal.step3 .restBtn {
+    background: #b91c1c;
+}
+.modal.step3 .restBtn:hover {
+    background: #991b1b;
 }
 
 /* 3단계 휴식 타이머 설정 */
@@ -95,8 +144,8 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    background: #f9fafb;
-    border: 1px solid #e5e5e5;
+    background: #fff;
+    border: 1px solid #fca5a5;
     border-radius: 10px;
     padding: 10px 14px;
     margin-bottom: 4px;
@@ -120,11 +169,11 @@
     width: 28px;
     height: 28px;
     border-radius: 8px;
-    border: 1px solid #e5e5e5;
+    border: 1px solid #fca5a5;
     background: #fff;
     font-size: 16px;
     font-weight: 600;
-    color: #555;
+    color: #dc2626;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -134,9 +183,8 @@
 }
 
 .timerBtn:hover {
-    background: #e5e7eb;
-    border-color: #aaa;
-    color: #333;
+    background: #fee2e2;
+    border-color: #ef4444;
 }
 
 .timerValue {

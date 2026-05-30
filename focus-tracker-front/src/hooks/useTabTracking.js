@@ -10,18 +10,27 @@ const DEFAULT_STATS = {
 };
 
 export function useTabTracking(running) {
+    // 세션 전체 누적값 — 화면 표시 + 종합 집중도 점수용
     const [tabStats, setTabStats] = useState(DEFAULT_STATS);
+    // 재시작 시마다 리셋되는 값 — 팝업 경고 발동 판단용
+    const [alertStats, setAlertStats] = useState(DEFAULT_STATS);
 
     const lastSwitchTime = useRef(null);
     const awayStartTime = useRef(null);
     const prevWasAllowed = useRef(false);
 
-    // 초기화
+    // 세션 완전 초기화
     const reset = useCallback(() => {
         setTabStats(DEFAULT_STATS);
+        setAlertStats(DEFAULT_STATS);
         lastSwitchTime.current = null;
         awayStartTime.current = null;
         prevWasAllowed.current = false;
+    }, []);
+
+    // 휴식 후 재시작 시 — alertStats만 리셋 (tabStats 유지)
+    const resetAlertStats = useCallback(() => {
+        setAlertStats(DEFAULT_STATS);
     }, []);
 
     useEffect(() => {
@@ -43,6 +52,10 @@ export function useTabTracking(running) {
                     awayStartTime.current = null;
                     if (awaySeconds > 0) {
                         setTabStats((prev) => ({
+                            ...prev,
+                            tabAway: prev.tabAway + awaySeconds,
+                        }));
+                        setAlertStats((prev) => ({
                             ...prev,
                             tabAway: prev.tabAway + awaySeconds,
                         }));
@@ -82,6 +95,16 @@ export function useTabTracking(running) {
                         ? prev.blockedAccess + 1
                         : prev.blockedAccess,
                 }));
+                setAlertStats((prev) => ({
+                    ...prev,
+                    tabSwitch: prev.tabSwitch + 1,
+                    rapidSwitch: isRapid
+                        ? prev.rapidSwitch + 1
+                        : prev.rapidSwitch,
+                    blockedAccess: blocked
+                        ? prev.blockedAccess + 1
+                        : prev.blockedAccess,
+                }));
             }
         };
 
@@ -89,5 +112,5 @@ export function useTabTracking(running) {
         return () => window.removeEventListener("message", handleMessage);
     }, [running]);
 
-    return { tabStats, reset };
+    return { tabStats, alertStats, reset, resetAlertStats };
 }

@@ -1,8 +1,5 @@
-import { useState } from "react";
-import { dummySessionData } from "../data/dummySessionData"; // TODO: DB 연동 시 제거
-// TODO: DB 연동 시 위 import 제거 후 아래 주석 해제
-// import { useState, useEffect } from "react";
-// import { getSessionHistory } from "../api/sessionApi";
+import { useState, useEffect } from "react";
+import { getSessionHistory } from "../api/sessionApi";
 import styles from "./MyPage.module.css";
 
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -13,7 +10,6 @@ const MODE_COLOR = {
     잠금: "#dc2626",
 };
 
-// 모드별 연한 배경색 (카드 배경용)
 const MODE_BG = {
     강의: "#eff6ff",
     자료: "#f0fdf4",
@@ -30,19 +26,19 @@ function formatSeconds(sec) {
     return `${m}분 ${String(s).padStart(2, "0")}초`;
 }
 
-function calcFocusRate(focusSeconds, totalSeconds) {
-    if (!totalSeconds) return 0;
-    return Math.round((focusSeconds / totalSeconds) * 100);
-}
-
 export default function MyPage() {
     const today = new Date();
     const [year, setYear] = useState(today.getFullYear());
     const [month, setMonth] = useState(today.getMonth()); // 0-indexed
     const [selectedDate, setSelectedDate] = useState(null); // "YYYY-MM-DD"
 
-    // TODO: DB 연동 시 아래 줄을 useState({})로 변경 후 useEffect 주석 해제
-    const sessionData = dummySessionData;
+    const [sessionData, setSessionData] = useState({});
+
+    useEffect(() => {
+        getSessionHistory()
+            .then((data) => setSessionData(data))
+            .catch((e) => console.error("세션 이력 조회 실패:", e));
+    }, []);
 
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -161,7 +157,6 @@ export default function MyPage() {
                                             key={idx}
                                             className={styles.sessionCard}
                                             style={{
-                                                // 모드별 동적 배경색
                                                 background:
                                                     MODE_BG[s.mode] ??
                                                     "#f9fafb",
@@ -196,11 +191,7 @@ export default function MyPage() {
                                                             styles.statValue
                                                         }
                                                     >
-                                                        {calcFocusRate(
-                                                            s.focusSeconds,
-                                                            s.totalSeconds,
-                                                        )}
-                                                        %
+                                                        {s.focusScore ?? 0}%
                                                     </span>
                                                 </div>
                                                 <div className={styles.statRow}>
@@ -217,7 +208,8 @@ export default function MyPage() {
                                                         }
                                                     >
                                                         {formatSeconds(
-                                                            s.maxFocusSeconds,
+                                                            s.maxFocusSeconds ??
+                                                                0,
                                                         )}
                                                     </span>
                                                 </div>
@@ -240,13 +232,6 @@ export default function MyPage() {
                                                     </span>
                                                 </div>
                                             </div>
-                                            <p
-                                                className={
-                                                    styles.sessionComment
-                                                }
-                                            >
-                                                멘트 추가 예정
-                                            </p>
                                         </div>
                                     ))}
                                 </div>

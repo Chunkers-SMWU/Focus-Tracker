@@ -40,24 +40,15 @@ function calculateHeadTilt(landmarks) {
     return Math.abs((Math.atan2(dy, dx) * 180) / Math.PI);
 }
 
-// 고개 방향(yaw) / 고개 숙임(pitch) 근사 계산
-// solvePnP 없이 랜드마크 좌표로 근사 — 팀원 코드의 calculate_head_pose() 대응
-function calculateHeadPose(landmarks) {
+// 고개 방향(yaw) 근사 계산
+function calculateHeadYaw(landmarks) {
     const nose = landmarks[1];
     const leftEye = landmarks[33];
     const rightEye = landmarks[263];
-    const chin = landmarks[152];
 
     const eyeCenterX = (leftEye.x + rightEye.x) / 2;
     const eyeWidth = Math.abs(rightEye.x - leftEye.x);
-    const yaw = eyeWidth === 0 ? 0 : ((nose.x - eyeCenterX) / eyeWidth) * 90;
-
-    const eyeCenterY = (leftEye.y + rightEye.y) / 2;
-    const faceHeight = Math.abs(chin.y - eyeCenterY);
-    const pitch =
-        faceHeight === 0 ? 0 : ((nose.y - eyeCenterY) / faceHeight - 0.5) * -60;
-
-    return { yaw, pitch };
+    return eyeWidth === 0 ? 0 : ((nose.x - eyeCenterX) / eyeWidth) * 90;
 }
 
 // 랜드마크 인덱스
@@ -76,8 +67,9 @@ const EYE_CLOSED_SECONDS = 0.5;
 const FACE_ABSENCE_THRESHOLD = 10;
 const HEAD_YAW_THRESHOLD = 45;
 const HEAD_DIRECTION_ALERT_COUNT = 3;
-const HEAD_DOWN_THRESHOLD = -30;
-const HEAD_DOWN_ALERT_COUNT = 3;
+// [추가] 고개 방향 쿨다운 — 브라우저 MediaPipe의 높은 fps로 인한 중복 카운트 방지
+// 파이썬은 낮은 fps 덕분에 자연스럽게 방지되던 것을 브라우저 환경에서 명시적으로 보정
+const HEAD_TURN_COOLDOWN = 1000; // ms
 
 // noFace가 활성화된 모드
 const NO_FACE_MODES = new Set(["강의", "잠금"]);
@@ -96,13 +88,16 @@ const INITIAL_RESULT = {
     noFace: false,
     noFaceSeconds: 0,
     headTurnCount: 0,
-    headNodCount: 0,
     alert: false,
     totalSeconds: 0,
     focusSeconds: 0,
     nonFocusSeconds: 0,
     eyeClosedSeconds: 0,
     maxFocusSeconds: 0,
+    // 점수 산출용 추가 값
+    closedDuration: 0, // 현재 연속 눈 감김 지속 시간(초) — 파이썬 closed_duration 대응
+    yawnCount: 0, // 누적 하품 횟수 — 파이썬 yawn_count 대응
+    faceAbsenceDuration: 0, // 현재 연속 얼굴 부재 시간(초) — 파이썬 face_absence_duration 대응
 };
 
 // 초기 카운터 상태
@@ -110,25 +105,26 @@ const makeInitialCounters = () => ({
     eyeClosedStart: null,
     eyeClosedDrowsy: false,
     eyeClosedTotalSeconds: 0,
+    closedDuration: 0, // 현재 연속 눈 감김 지속 시간(초)
     openMouthFrameCount: 0,
+    yawnCount: 0, // 누적 하품 횟수
+    yawnDetected: false,
     headTiltFrameCount: 0,
     headTiltCount: 0,
     headTiltTotal: 0,
     headTilted: false,
     faceAbsenceStart: null,
+    faceAbsenceDuration: 0, // 현재 연속 얼굴 부재 시간(초)
     noFaceSeconds: 0,
     headTurnChanged: false,
+    headTurnLastTime: 0, // [추가] 마지막 고개 방향 카운트 시각
     headTurnCount: 0,
     headTurnTotal: 0,
-    headDownDetected: false,
-    headNodCount: 0,
-    headNodTotal: 0,
     startTime: null,
     lastFrameTime: null,
     focusSeconds: 0,
     nonFocusSeconds: 0,
     stoppedTotalSeconds: 0,
-
     maxFocusSeconds: 0,
     lastStartFocusSeconds: 0,
 });
@@ -209,25 +205,26 @@ export function useDrowsyDetection(videoRef) {
             eyeClosedStart: null,
             eyeClosedDrowsy: false,
             eyeClosedTotalSeconds: prev.eyeClosedTotalSeconds ?? 0,
+            closedDuration: 0,
             openMouthFrameCount: 0,
+            yawnCount: prev.yawnCount ?? 0, // 세션 내 누적 유지
+            yawnDetected: false,
             headTiltFrameCount: 0,
             headTiltCount: 0,
             headTiltTotal: prev.headTiltTotal ?? 0,
             headTilted: false,
             faceAbsenceStart: null,
+            faceAbsenceDuration: 0,
             noFaceSeconds: prev.noFaceSeconds ?? 0,
             headTurnChanged: false,
+            headTurnLastTime: 0,
             headTurnCount: 0,
             headTurnTotal: prev.headTurnTotal ?? 0,
-            headDownDetected: false,
-            headNodCount: 0,
-            headNodTotal: prev.headNodTotal ?? 0,
             startTime: Date.now(),
             lastFrameTime: Date.now(),
             focusSeconds: prev.focusSeconds ?? 0,
             nonFocusSeconds: prev.nonFocusSeconds ?? 0,
             stoppedTotalSeconds: prev.stoppedTotalSeconds ?? 0,
-            // 최대 집중 시간 — 이전 최댓값 유지, 새 구간 시작 스냅샷 갱신
             maxFocusSeconds: prev.maxFocusSeconds ?? 0,
             lastStartFocusSeconds: prev.focusSeconds ?? 0,
         };
@@ -272,15 +269,17 @@ export function useDrowsyDetection(videoRef) {
 
                 // 얼굴 미감지
                 if (!res.multiFaceLandmarks?.length) {
+                    c.closedDuration = 0; // 얼굴 없으면 눈 감김 초기화
+
                     if (noFaceActive) {
                         if (c.faceAbsenceStart === null)
                             c.faceAbsenceStart = now;
-                        const absenceSeconds =
+                        c.faceAbsenceDuration =
                             (now - c.faceAbsenceStart) / 1000;
                         c.noFaceSeconds += delta;
 
                         const noFaceAlert =
-                            absenceSeconds >= FACE_ABSENCE_THRESHOLD;
+                            c.faceAbsenceDuration >= FACE_ABSENCE_THRESHOLD;
                         if (!noFaceAlert) c.focusSeconds += delta;
                         else c.nonFocusSeconds += delta;
 
@@ -290,6 +289,10 @@ export function useDrowsyDetection(videoRef) {
                             noFaceSeconds: parseFloat(
                                 c.noFaceSeconds.toFixed(1),
                             ),
+                            faceAbsenceDuration: parseFloat(
+                                c.faceAbsenceDuration.toFixed(1),
+                            ),
+                            closedDuration: 0,
                             alert: noFaceAlert,
                             totalSeconds: parseFloat(totalSeconds.toFixed(1)),
                             focusSeconds: parseFloat(c.focusSeconds.toFixed(1)),
@@ -301,7 +304,9 @@ export function useDrowsyDetection(videoRef) {
                     return;
                 }
 
+                // 얼굴 감지됨 — 얼굴 부재 초기화
                 c.faceAbsenceStart = null;
+                c.faceAbsenceDuration = 0;
 
                 const landmarks = res.multiFaceLandmarks[0];
                 const det = detectorRef.current;
@@ -312,28 +317,41 @@ export function useDrowsyDetection(videoRef) {
                     2;
                 const mar = calculateMAR(landmarks, MOUTH);
                 const tiltAngle = calculateHeadTilt(landmarks);
-                const { yaw, pitch } = calculateHeadPose(landmarks);
+                const yaw = calculateHeadYaw(landmarks);
 
                 det.update(ear);
 
-                // 눈 감김
+                // 눈 감김 — closedDuration: 현재 연속 감김 시간
                 if (ear < EAR_THRESHOLD) {
                     if (c.eyeClosedStart === null) c.eyeClosedStart = now;
-                    const elapsed = (now - c.eyeClosedStart) / 1000;
-                    if (elapsed >= EYE_CLOSED_SECONDS) c.eyeClosedDrowsy = true;
+                    c.closedDuration = (now - c.eyeClosedStart) / 1000;
+                    if (c.closedDuration >= EYE_CLOSED_SECONDS)
+                        c.eyeClosedDrowsy = true;
                 } else {
                     c.eyeClosedStart = null;
                     c.eyeClosedDrowsy = false;
+                    c.closedDuration = 0;
                 }
                 const eyesClosed = c.eyeClosedDrowsy;
                 if (eyesClosed) c.eyeClosedTotalSeconds += delta;
 
-                // 하품
-                if (mar > MAR_THRESHOLD) c.openMouthFrameCount++;
-                else c.openMouthFrameCount = 0;
+                // 하품 — OPEN_MOUTH_FRAMES 이상 지속 시 1회 카운트
+                if (mar > MAR_THRESHOLD) {
+                    c.openMouthFrameCount++;
+                    if (
+                        c.openMouthFrameCount >= OPEN_MOUTH_FRAMES &&
+                        !c.yawnDetected
+                    ) {
+                        c.yawnCount++;
+                        c.yawnDetected = true;
+                    }
+                } else {
+                    c.openMouthFrameCount = 0;
+                    c.yawnDetected = false;
+                }
                 const mouthOpen = c.openMouthFrameCount >= OPEN_MOUTH_FRAMES;
 
-                // 고개 기울기(roll)
+                // 고개 기울기(roll) — 카운트만 유지 (집중/비집중 판단에서 제외)
                 if (tiltAngle > HEAD_TILT_THRESHOLD) {
                     c.headTiltFrameCount++;
                     if (
@@ -349,47 +367,36 @@ export function useDrowsyDetection(videoRef) {
                     c.headTilted = false;
                 }
 
-                // 고개 방향(yaw)
+                // 고개 방향(yaw) — 쿨다운으로 중복 카운트 방지
                 if (Math.abs(yaw) > HEAD_YAW_THRESHOLD) {
                     if (!c.headTurnChanged) {
                         c.headTurnChanged = true;
-                        c.headTurnCount++;
-                        c.headTurnTotal++;
+                        if (now - c.headTurnLastTime >= HEAD_TURN_COOLDOWN) {
+                            c.headTurnCount++;
+                            c.headTurnTotal++;
+                            c.headTurnLastTime = now;
+                        }
                     }
                 } else {
                     c.headTurnChanged = false;
                 }
 
-                // 고개 숙임(pitch)
-                if (pitch < HEAD_DOWN_THRESHOLD) {
-                    if (!c.headDownDetected) {
-                        c.headDownDetected = true;
-                        c.headNodCount++;
-                        c.headNodTotal++;
-                    }
-                } else {
-                    c.headDownDetected = false;
-                }
-
                 const tiltAlert = c.headTiltCount >= HEAD_TILT_ALERT_COUNT;
                 const headTurnAlert =
                     c.headTurnCount > HEAD_DIRECTION_ALERT_COUNT;
-                const headNodAlert = c.headNodCount > HEAD_DOWN_ALERT_COUNT;
                 const blinkState = det.getState();
 
                 if (tiltAlert) c.headTiltCount = 0;
                 if (headTurnAlert) c.headTurnCount = 0;
-                if (headNodAlert) c.headNodCount = 0;
 
+                // alert — 집중도 모니터링 4개 항목 기준 (얼굴 부재는 얼굴 감지 블록 밖에서 처리)
                 const alert =
-                    eyesClosed ||
-                    mouthOpen ||
-                    tiltAlert ||
-                    headTurnAlert ||
-                    headNodAlert ||
-                    blinkState === "DROWSY";
+                    eyesClosed || headTurnAlert || blinkState === "DROWSY";
 
-                const unfocused = alert || c.headTilted;
+                // 집중/비집중 판단 — 집중도 모니터링 항목과 동일한 기준
+                const unfocused =
+                    eyesClosed || headTurnAlert || blinkState === "DROWSY";
+
                 if (!unfocused) c.focusSeconds += delta;
                 else c.nonFocusSeconds += delta;
 
@@ -406,7 +413,6 @@ export function useDrowsyDetection(videoRef) {
                     noFace: false,
                     noFaceSeconds: parseFloat(c.noFaceSeconds.toFixed(1)),
                     headTurnCount: c.headTurnTotal,
-                    headNodCount: c.headNodTotal,
                     alert,
                     totalSeconds: parseFloat(totalSeconds.toFixed(1)),
                     focusSeconds: parseFloat(c.focusSeconds.toFixed(1)),
@@ -415,6 +421,12 @@ export function useDrowsyDetection(videoRef) {
                         c.eyeClosedTotalSeconds.toFixed(1),
                     ),
                     maxFocusSeconds: parseFloat(c.maxFocusSeconds.toFixed(1)),
+                    // 점수 산출용
+                    closedDuration: parseFloat(c.closedDuration.toFixed(2)),
+                    yawnCount: c.yawnCount,
+                    faceAbsenceDuration: parseFloat(
+                        c.faceAbsenceDuration.toFixed(1),
+                    ),
                 });
             });
 

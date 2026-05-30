@@ -34,6 +34,7 @@ export default function MainPage({
     showRestDonePopup,
     onRestDonePopupClose,
     onRestTimerStart,
+    integratedScore, // { score, status, violations, itemScores }
 }) {
     const isResting = !drowsy.running;
 
@@ -168,7 +169,11 @@ export default function MainPage({
 
             {/* 하단: 집중도 모니터링 */}
             <div className={styles.monitorRow}>
-                <FocusRings result={drowsy.result} currentMode={currentMode} />
+                <FocusRings
+                    result={drowsy.result}
+                    currentMode={currentMode}
+                    integratedScore={integratedScore}
+                />
             </div>
 
             {/* 버튼 행: 세션 초기화 | 시작/휴식 | 세션 종료 */}

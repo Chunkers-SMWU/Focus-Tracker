@@ -12,13 +12,24 @@
 
 /* 로고 */
 .logo {
-    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 0px;
+    font-size: 18px;
     font-weight: 700;
     color: #fff;
     letter-spacing: -0.02em;
     flex-shrink: 0;
     font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
     cursor: pointer;
+}
+
+.logoImg {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    margin-left: -16px;
+    margin-right: -18px;
 }
 
 /* 모드 탭 */

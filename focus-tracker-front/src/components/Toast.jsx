@@ -3,7 +3,7 @@ import { useEffect } from "react";
 export default function Toast({ visible, onHide }) {
     useEffect(() => {
         if (!visible) return;
-        const t = setTimeout(onHide, 2200);
+        const t = setTimeout(onHide, 1500);
         return () => clearTimeout(t);
     }, [visible, onHide]);
 

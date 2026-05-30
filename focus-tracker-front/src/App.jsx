@@ -14,12 +14,18 @@ import { useTabTracking } from "./hooks/useTabTracking.js";
 import useDrowsyAlert from "./hooks/useDrowsyAlert.js";
 import { logout } from "./api/authApi.js";
 import { saveSession } from "./api/sessionApi.js";
+import logo from "./assets/logo.png";
 
 const DEFAULT_SITES = ["youtube.com", "instagram.com", "twitter.com"];
 const FOCUS_TRACKER_ORIGIN = "http://localhost:5173"; // 배포 시 실제 도메인으로 교체
+const MODE_MAP = {
+    강의: "LECTURE",
+    자료: "SEARCH",
+    잠금: "LOCK",
+};
 
 // 스플래시
-function SplashScreen() {
+function SplashScreen({ logo }) {
     return (
         <div
             style={{
@@ -35,14 +41,33 @@ function SplashScreen() {
         >
             <div
                 style={{
-                    fontSize: 28,
-                    fontWeight: 700,
-                    color: "#2563eb",
-                    letterSpacing: "-0.02em",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0,
                     animation: "splashFadeIn 0.6s ease forwards",
                 }}
             >
-                Focus Tracker
+                <img
+                    src={logo}
+                    alt="logo"
+                    style={{
+                        width: 144,
+                        height: 144,
+                        objectFit: "contain",
+                        marginLeft: -32,
+                        marginRight: -36,
+                    }}
+                />
+                <span
+                    style={{
+                        fontSize: 44,
+                        fontWeight: 700,
+                        color: "#1a1a1a",
+                        letterSpacing: "-0.02em",
+                    }}
+                >
+                    Focus Tracker
+                </span>
             </div>
             <style>{`
                 @keyframes splashFadeIn {
@@ -64,13 +89,19 @@ export default function App() {
     const [page, setPage] = useState("login");
 
     // 유저 정보 — 로그인 시 저장, 로그아웃 시 초기화
+    // eslint-disable-next-line no-unused-vars
     const [user, setUser] = useState(null); // { id, name }
 
     const drowsyVideoRef = useRef(null);
     const drowsy = useDrowsyDetection(drowsyVideoRef);
 
     // 탭 추적 — App 레벨에서 관리해야 페이지 이동 시 초기화 안 됨
-    const { tabStats, reset: resetTabs } = useTabTracking(drowsy.running);
+    const {
+        tabStats,
+        alertStats,
+        reset: resetTabs,
+        resetAlertStats,
+    } = useTabTracking(drowsy.running);
 
     const [sessionSnapshot, setSessionSnapshot] = useState(null);
 
@@ -135,9 +166,7 @@ export default function App() {
         setShowRestDonePopup(false);
     }, []);
 
-    // 졸음 경고 — useDrowsyAlert보다 먼저 선언해야 함
-    // handleAlertRest는 resetAlertCount를 참조하므로 useDrowsyAlert 이후에 선언
-    // → onRest 자리에 ref를 통해 연결
+    // 졸음 경고 — handleAlertRest는 resetAlertCount를 참조하므로 ref bridge 패턴 사용
     const onAlertRestRef = useRef(null);
     const handleAlertRestBridge = useCallback((minutes) => {
         onAlertRestRef.current?.(minutes);
@@ -146,6 +175,7 @@ export default function App() {
     const {
         alertStep,
         alertLog,
+        integratedScore, // { score, status, violations, itemScores }
         handleContinue,
         handleRest,
         resetAlert,
@@ -153,6 +183,7 @@ export default function App() {
     } = useDrowsyAlert(
         drowsy.result,
         tabStats,
+        alertStats,
         drowsy.running,
         handleAlertRestBridge,
         thresholds,
@@ -163,9 +194,13 @@ export default function App() {
         (minutes) => {
             drowsy.stop();
             resetAlertCount();
-            if (minutes) startRestCountdown(minutes);
+            resetAlertStats(); // 휴식 후 재시작 시 팝업 판단용 탭 카운트 리셋
+            if (minutes) {
+                setRestTimerMinutes(minutes);
+                startRestCountdown(minutes);
+            }
         },
-        [drowsy, resetAlertCount, startRestCountdown],
+        [drowsy, resetAlertCount, resetAlertStats, startRestCountdown],
     );
 
     // ref에 최신 콜백 동기화
@@ -225,7 +260,7 @@ export default function App() {
     const handleUnblockCancel = () => setUnblockSite(null);
 
     useEffect(() => {
-        const t = setTimeout(() => setShowSplash(false), 2300);
+        const t = setTimeout(() => setShowSplash(false), 2400);
         return () => clearTimeout(t);
     }, []);
 
@@ -246,6 +281,7 @@ export default function App() {
         if (hasStarted) setRestCount((p) => p + 1);
         setHasStarted(true);
         clearRestTimer();
+        resetAlertStats(); // 재시작 시 팝업 판단용 탭 카운트 리셋
         resetAlertCount(); // 휴식 후 재시작 시 경고 단계 리셋 (alertLog는 유지)
         drowsy.start();
     };
@@ -282,6 +318,7 @@ export default function App() {
             allowedSites,
             options,
         };
+        setToastVisible(false); // 이전 토스트 초기화
         setPrevPage(page);
         setPage("settings");
     };
@@ -298,21 +335,24 @@ export default function App() {
         setPage(prevPage);
     };
 
-    // 세션 종료 시 result + alertLog 스냅샷 저장 + DB 저장 + 웹캠 중지 + 데이터 초기화
+    // 세션 종료 시 result + alertLog + integratedScore 스냅샷 저장 + DB 저장 + 웹캠 중지 + 데이터 초기화
     const handleEnd = () => {
         const result = { ...drowsy.result };
-        const endTime = new Date().toISOString();
+        const currentAlertLog = [...alertLog];
 
-        setSessionSnapshot({ ...result, alertLog });
+        setSessionSnapshot({
+            ...result,
+            alertLog: currentAlertLog,
+            integratedScore: { ...integratedScore }, // 종합 점수 스냅샷 포함
+        });
 
         saveSession({
-            userId: user?.id ?? null,
-            mode: currentMode,
-            startedAt: sessionStartTimeRef.current,
-            endedAt: endTime,
-            totalSeconds: result.totalSeconds ?? 0,
-            focusSeconds: result.focusSeconds ?? 0,
-            maxFocusSeconds: result.maxFocusSeconds ?? 0,
+            mode: MODE_MAP[currentMode] ?? "LECTURE",
+            focusTime: Math.round(result.focusSeconds ?? 0),
+            nonFocusTime: Math.round(result.nonFocusSeconds ?? 0),
+            totalTime: Math.round(result.totalSeconds ?? 0),
+            focusScore: Math.round(integratedScore?.score ?? 0), // 종합 집중도 점수
+            alertCount: currentAlertLog.length,
         }).catch((e) => console.error("세션 저장 실패:", e));
 
         drowsy.stop();
@@ -330,7 +370,11 @@ export default function App() {
     // 마이페이지 진입 — 세션 종료 후 데이터 초기화
     const handleMyPageOpen = () => {
         if (drowsy.running || hasStarted) {
-            setSessionSnapshot({ ...drowsy.result, alertLog });
+            setSessionSnapshot({
+                ...drowsy.result,
+                alertLog,
+                integratedScore: { ...integratedScore },
+            });
             drowsy.stop();
             drowsy.reset();
             resetTabs();
@@ -396,7 +440,7 @@ export default function App() {
 
     return (
         <>
-            {showSplash && <SplashScreen />}
+            {showSplash && <SplashScreen logo={logo} />}
 
             {/* 금지 해제 팝업 */}
             <UnblockModal
@@ -480,6 +524,7 @@ export default function App() {
                         showRestDonePopup={showRestDonePopup}
                         onRestDonePopupClose={() => setShowRestDonePopup(false)}
                         onRestTimerStart={startRestCountdown}
+                        integratedScore={integratedScore}
                     />
                 </div>
             )}

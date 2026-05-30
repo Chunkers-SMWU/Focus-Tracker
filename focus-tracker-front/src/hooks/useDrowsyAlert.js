@@ -1,44 +1,260 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { modeData } from "../data/modeData";
 
-const SUSTAIN_THRESHOLD = 3; // 3초 지속 시 경고 발동
 const COOLDOWN_SECONDS = 30; // 경고 후 30초 쿨다운
 
-/** 감지 항목 목록 반환 (리포트용 기록에도 사용) */
-function getTriggeredItems(result, tabStats, thresholds, currentMode) {
-    const items = [];
-    if (result.eyesClosed) items.push("눈 감김");
-    if (result.mouthOpen) items.push("하품");
-    if (result.blinkState === "LOW_FOCUS" || result.blinkState === "DROWSY")
-        items.push("깜빡임 이상");
-    if (result.headTilted) items.push("고개 방향 이탈");
-    if (result.noFace) items.push("얼굴 부재");
+// ==============================
+// 모드별 기준/가중치 (파이썬 MODE_CONFIGS 대응)
+// ==============================
+const MODE_CONFIGS = {
+    강의: {
+        criteria: {
+            // 브라우저
+            "탭 이탈 누적시간": {
+                source: "browser",
+                key: "tabAway",
+                threshold: 300,
+                op: ">=",
+            },
+            "짧은 간격 반복전환": {
+                source: "browser",
+                key: "rapidSwitch",
+                threshold: 1,
+                op: ">=",
+            },
+            "허용되지 않은 창 접속": {
+                source: "browser",
+                key: "blockedAccess",
+                threshold: 1,
+                op: ">=",
+            },
+            // 웹캠
+            "얼굴 부재": {
+                source: "webcam",
+                key: "faceAbsenceDuration",
+                threshold: 10,
+                op: ">",
+            },
+            "고개 방향": {
+                source: "webcam",
+                key: "headTurnCount",
+                threshold: 3,
+                op: ">",
+            },
+            "눈 감김": {
+                source: "webcam",
+                key: "closedDuration",
+                threshold: 0.5,
+                op: ">=",
+            },
+            "깜빡임 부족": {
+                source: "webcam",
+                key: "blinkRate",
+                threshold: 8,
+                op: "<",
+            },
+        },
+        weights: {
+            "탭 이탈 누적시간": 0.15,
+            "짧은 간격 반복전환": 0.1,
+            "허용되지 않은 창 접속": 0.15,
+            "얼굴 부재": 0.15,
+            "고개 방향": 0.15,
+            "눈 감김": 0.2,
+            "깜빡임 부족": 0.1,
+        },
+    },
+    자료: {
+        criteria: {
+            "허용되지 않은 창 접속": {
+                source: "browser",
+                key: "blockedAccess",
+                threshold: 1,
+                op: ">=",
+            },
+            "고개 방향": {
+                source: "webcam",
+                key: "headTurnCount",
+                threshold: 3,
+                op: ">",
+            },
+            "눈 감김": {
+                source: "webcam",
+                key: "closedDuration",
+                threshold: 0.5,
+                op: ">=",
+            },
+            "깜빡임 부족": {
+                source: "webcam",
+                key: "blinkRate",
+                threshold: 8,
+                op: "<",
+            },
+        },
+        weights: {
+            "허용되지 않은 창 접속": 0.25,
+            "고개 방향": 0.2,
+            "눈 감김": 0.35,
+            "깜빡임 부족": 0.2,
+        },
+    },
+    잠금: {
+        criteria: {
+            "탭 전환 횟수": {
+                source: "browser",
+                key: "tabSwitch",
+                threshold: 1,
+                op: ">=",
+            },
+            "탭 이탈 누적시간": {
+                source: "browser",
+                key: "tabAway",
+                threshold: 10,
+                op: ">=",
+            },
+            "짧은 간격 반복전환": {
+                source: "browser",
+                key: "rapidSwitch",
+                threshold: 1,
+                op: ">=",
+            },
+            "허용되지 않은 창 접속": {
+                source: "browser",
+                key: "blockedAccess",
+                threshold: 1,
+                op: ">=",
+            },
+            하품: {
+                source: "webcam",
+                key: "yawnCount",
+                threshold: 1,
+                op: ">=",
+            },
+            "얼굴 부재": {
+                source: "webcam",
+                key: "faceAbsenceDuration",
+                threshold: 10,
+                op: ">=",
+            },
+            "고개 방향": {
+                source: "webcam",
+                key: "headTurnCount",
+                threshold: 2,
+                op: ">",
+            },
+            "눈 감김": {
+                source: "webcam",
+                key: "closedDuration",
+                threshold: 0.5,
+                op: ">=",
+            },
+            "깜빡임 부족": {
+                source: "webcam",
+                key: "blinkRate",
+                threshold: 8,
+                op: "<",
+            },
+        },
+        weights: {
+            "탭 전환 횟수": 0.1,
+            "탭 이탈 누적시간": 0.1,
+            "짧은 간격 반복전환": 0.1,
+            "허용되지 않은 창 접속": 0.1,
+            하품: 0.1,
+            "얼굴 부재": 0.1,
+            "고개 방향": 0.1,
+            "눈 감김": 0.2,
+            "깜빡임 부족": 0.1,
+        },
+    },
+};
 
-    // 탭 관련 — modeData 기본값 기준, 사용자 설정값 우선 적용
-    // modeData의 values가 null이면 해당 항목 비활성
-    const defaults = modeData[currentMode]?.values ?? {};
-    const ts = thresholds ?? {};
+// ==============================
+// 점수 산출 유틸 (파이썬 ratio_score / low_blink_score 대응)
+// ==============================
 
-    const getThreshold = (key) => {
-        if (ts[key] !== undefined) return ts[key]; // 사용자 설정값 우선
-        return defaults[key]; // 없으면 modeData 기본값
-    };
+/** 기준값 대비 0~100점 반환 */
+function ratioScore(value, threshold) {
+    if (threshold <= 0) return 0;
+    return Math.min((value / threshold) * 100, 100);
+}
 
-    const tTabSwitch = getThreshold("tabSwitch");
-    const tTabAway = getThreshold("tabAway");
-    const tRapidSwitch = getThreshold("rapidSwitch");
-    const tBlockedAccess = getThreshold("blockedAccess");
+/** 깜빡임 부족 점수 — 낮을수록 위험하므로 반전 산출 */
+function lowBlinkScore(blinkRate, minRate, blinkValid) {
+    if (!blinkValid) return 0;
+    return Math.max(((minRate - blinkRate) / minRate) * 100, 0);
+}
 
-    if (tTabSwitch !== null && tabStats.tabSwitch >= tTabSwitch)
-        items.push("탭 전환");
-    if (tTabAway !== null && tabStats.tabAway >= tTabAway)
-        items.push("탭 이탈");
-    if (tRapidSwitch !== null && tabStats.rapidSwitch >= tRapidSwitch)
-        items.push("빠른 반복 전환");
-    if (tBlockedAccess !== null && tabStats.blockedAccess >= tBlockedAccess)
-        items.push("차단 사이트 접속");
+/** 적발 조건 판정 */
+function isViolation(value, threshold, op) {
+    if (op === ">=") return value >= threshold;
+    if (op === ">") return value > threshold;
+    if (op === "<=") return value <= threshold;
+    if (op === "<") return value < threshold;
+    return false;
+}
 
-    return items;
+/**
+ * 통합 점수 산출 (파이썬 calculate_integrated_score 대응)
+ * @returns {{ score: number, status: string, violations: string[], itemScores: object }}
+ */
+function calculateIntegratedScore(
+    mode,
+    result,
+    tabStats,
+    blinkValid,
+    thresholds,
+) {
+    const config = MODE_CONFIGS[mode];
+    if (!config)
+        return { score: 0, status: "정상", violations: [], itemScores: {} };
+
+    const userThresholds = thresholds ?? {};
+    const itemScores = {};
+    const violations = [];
+
+    for (const [name, rule] of Object.entries(config.criteria)) {
+        let threshold = rule.threshold;
+        if (rule.source === "browser") {
+            const userKey = rule.key;
+            if (
+                userThresholds[userKey] !== undefined &&
+                userThresholds[userKey] !== null
+            ) {
+                threshold = userThresholds[userKey];
+            }
+        }
+
+        const value =
+            rule.source === "browser"
+                ? (tabStats[rule.key] ?? 0)
+                : (result[rule.key] ?? 0);
+
+        let score, violated;
+
+        if (name === "깜빡임 부족") {
+            score = lowBlinkScore(value, threshold, blinkValid);
+            violated = blinkValid && isViolation(value, threshold, rule.op);
+        } else {
+            score = ratioScore(value, threshold);
+            violated = isViolation(value, threshold, rule.op);
+        }
+
+        itemScores[name] = score;
+        if (violated) violations.push(name);
+    }
+
+    const totalScore = Object.entries(config.weights).reduce(
+        (sum, [name, weight]) => sum + (itemScores[name] ?? 0) * weight,
+        0,
+    );
+
+    let status;
+    if (totalScore < 30) status = "정상";
+    else if (totalScore < 50) status = "주의";
+    else if (totalScore < 70) status = "경고";
+    else status = "위험";
+
+    return { score: totalScore, status, violations, itemScores };
 }
 
 /** Web Audio API로 경고음 재생 */
@@ -63,7 +279,8 @@ function playAlertSound(volume) {
 /**
  * useDrowsyAlert
  * @param {object}   result      - useDrowsyDetection result
- * @param {object}   tabStats    - useTabTracking tabStats
+ * @param {object}   tabStats    - useTabTracking tabStats (점수 산출용 누적값)
+ * @param {object}   alertStats  - useTabTracking alertStats (팝업 판단용, 재시작마다 리셋)
  * @param {boolean}  running     - drowsy.running
  * @param {function} onRest      - 휴식하기 콜백
  * @param {object}   thresholds  - 사용자 설정 임계값
@@ -72,6 +289,7 @@ function playAlertSound(volume) {
 export default function useDrowsyAlert(
     result,
     tabStats,
+    alertStats,
     running,
     onRest,
     thresholds,
@@ -79,16 +297,24 @@ export default function useDrowsyAlert(
 ) {
     const [alertStep, setAlertStep] = useState(null);
     const [alertLog, setAlertLog] = useState([]);
+    // 통합 점수 상태 — 외부 컴포넌트(MainPage 등)에서 사용 가능
+    const [integratedScore, setIntegratedScore] = useState({
+        score: 0,
+        status: "정상",
+        violations: [],
+        itemScores: {},
+    });
 
     const alertCountRef = useRef(0);
-    const sustainRef = useRef(0);
     const cooldownRef = useRef(false);
     const cooldownTimer = useRef(null);
+    // 재시작 시점 웹캠 누적값 스냅샷 — 팝업 판단 시 증가분만 사용
+    const webcamSnapshotRef = useRef({});
 
-    // result, tabStats, running, thresholds, currentMode를 ref로 관리
-    // interval 재등록 없이 최신값 참조
+    // 최신값을 ref로 관리 — interval 재등록 없이 참조
     const resultRef = useRef(result);
     const tabStatsRef = useRef(tabStats);
+    const alertStatsRef = useRef(alertStats);
     const runningRef = useRef(running);
     const thresholdsRef = useRef(thresholds);
     const currentModeRef = useRef(currentMode);
@@ -99,6 +325,9 @@ export default function useDrowsyAlert(
     useEffect(() => {
         tabStatsRef.current = tabStats;
     }, [tabStats]);
+    useEffect(() => {
+        alertStatsRef.current = alertStats;
+    }, [alertStats]);
     useEffect(() => {
         runningRef.current = running;
     }, [running]);
@@ -123,7 +352,7 @@ export default function useDrowsyAlert(
     }, []);
 
     const triggerAlert = useCallback(
-        (triggeredItems) => {
+        (violations) => {
             alertCountRef.current += 1;
             const step = Math.min(alertCountRef.current, 3);
 
@@ -131,18 +360,19 @@ export default function useDrowsyAlert(
 
             setAlertLog((prev) => [
                 ...prev,
-                { step, triggeredItems, timestamp: new Date().toISOString() },
+                {
+                    step,
+                    triggeredItems: violations,
+                    timestamp: new Date().toISOString(),
+                },
             ]);
             setAlertStep(step);
             startCooldown();
-            sustainRef.current = 0;
         },
         [startCooldown],
     );
 
-    const handleContinue = useCallback(() => {
-        setAlertStep(null);
-    }, []);
+    const handleContinue = useCallback(() => setAlertStep(null), []);
 
     const handleRest = useCallback(
         (restMinutes) => {
@@ -152,43 +382,80 @@ export default function useDrowsyAlert(
         [onRest],
     );
 
-    /** 휴식 후 재시작 시 — 단계만 리셋, alertLog는 유지 */
+    /** 휴식 후 재시작 시 — 단계만 리셋, alertLog 유지, 웹캠 누적값 스냅샷 갱신 */
     const resetAlertCount = useCallback(() => {
         alertCountRef.current = 0;
-        sustainRef.current = 0;
         cooldownRef.current = false;
         clearTimeout(cooldownTimer.current);
         setAlertStep(null);
+        // 재시작 시점의 웹캠 누적값 스냅샷 저장
+        const r = resultRef.current;
+        webcamSnapshotRef.current = {
+            headTurnCount: r.headTurnCount ?? 0,
+            yawnCount: r.yawnCount ?? 0,
+        };
     }, []);
 
     /** 세션 완전 초기화 시 — 단계 + log 전부 리셋 */
     const resetAlert = useCallback(() => {
         alertCountRef.current = 0;
-        sustainRef.current = 0;
         cooldownRef.current = false;
         clearTimeout(cooldownTimer.current);
         setAlertStep(null);
         setAlertLog([]);
+        webcamSnapshotRef.current = {};
+        setIntegratedScore({
+            score: 0,
+            status: "정상",
+            violations: [],
+            itemScores: {},
+        });
     }, []);
 
-    // interval은 마운트 시 한 번만 등록 — 최신값은 ref로 참조
+    // 1초마다 점수 산출 + 경고 판단
     useEffect(() => {
         const id = setInterval(() => {
-            if (!runningRef.current || cooldownRef.current) return;
+            if (!runningRef.current) return;
 
-            const items = getTriggeredItems(
-                resultRef.current,
-                tabStatsRef.current,
-                thresholdsRef.current,
+            const r = resultRef.current;
+            // 파이썬 BLINK_WARMUP_SEC(30초) 대응 — 세션 경과 시간 30초 이상 + 첫 깜빡임 감지 후 유효
+            const blinkValid =
+                r.blinkState !== "MEASURING" && r.totalSeconds >= 30;
+
+            // 점수 산출 — tabStats(누적값) 기준
+            const scoreResult = calculateIntegratedScore(
                 currentModeRef.current,
+                r,
+                tabStatsRef.current,
+                blinkValid,
+                thresholdsRef.current,
             );
-            if (items.length >= 2) {
-                sustainRef.current += 1;
-                if (sustainRef.current >= SUSTAIN_THRESHOLD) {
-                    triggerAlert(items);
-                }
-            } else {
-                sustainRef.current = 0;
+            setIntegratedScore(scoreResult);
+
+            // 팝업 경고 판단 — alertStats(재시작마다 리셋) + 웹캠 증가분 기준
+            if (cooldownRef.current) return;
+
+            const snap = webcamSnapshotRef.current;
+            const alertResult = calculateIntegratedScore(
+                currentModeRef.current,
+                {
+                    ...r,
+                    headTurnCount: Math.max(
+                        (r.headTurnCount ?? 0) - (snap.headTurnCount ?? 0),
+                        0,
+                    ),
+                    yawnCount: Math.max(
+                        (r.yawnCount ?? 0) - (snap.yawnCount ?? 0),
+                        0,
+                    ),
+                },
+                alertStatsRef.current,
+                blinkValid,
+                thresholdsRef.current,
+            );
+
+            if (alertResult.violations.length >= 2) {
+                triggerAlert(alertResult.violations);
             }
         }, 1000);
 
@@ -202,6 +469,7 @@ export default function useDrowsyAlert(
     return {
         alertStep,
         alertLog,
+        integratedScore, // { score, status, violations, itemScores }
         handleContinue,
         handleRest,
         resetAlert,

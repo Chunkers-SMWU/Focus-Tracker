@@ -8,94 +8,86 @@ const MODE_CONFIG = {
     잠금: { noFace: true, headTurn: true, eyeClosed: true, blink: true },
 };
 
-// 링 메타데이터
+// 링 메타데이터 — 파이썬 threshold 기준
 function buildMetrics(result, currentMode) {
     const cfg = MODE_CONFIG[currentMode] ?? MODE_CONFIG["강의"];
     return [
         {
-            key: "noFace",
-            label: "얼굴 부재",
-            value: result?.noFaceSeconds ?? null,
-            max: 60,
-            active: cfg.noFace,
-            thresholds: { warn: 10, danger: 20 },
-            inverse: true,
-        },
-        {
             key: "headTurn",
             label: "고개 방향",
             value: result?.headTurnCount ?? null,
-            max: 6,
+            max: currentMode === "잠금" ? 3 : 4, // 잠금 threshold 2 초과, 강의/자료 threshold 3 초과
             active: cfg.headTurn,
-            thresholds: { warn: 2, danger: 3 },
-            inverse: true,
+        },
+        {
+            key: "noFace",
+            label: "얼굴 부재",
+            value: result?.faceAbsenceDuration ?? null,
+            max: 10,
+            active: cfg.noFace,
         },
         {
             key: "eyeClosed",
             label: "눈 감김",
-            value: result?.eyeClosedSeconds ?? null,
-            max: 30,
+            value: result?.closedDuration ?? null,
+            max: 0.5,
             active: cfg.eyeClosed,
-            thresholds: { warn: 3, danger: 10 },
-            inverse: true,
         },
         {
             key: "blink",
             label: "깜빡임",
             value: result?.blinkRate ?? 0,
-            max: 15,
+            max: 8, // 파이썬 threshold 8 기준
             active: cfg.blink,
-            thresholds: { warn: 10, danger: 8 },
-            inverse: false,
-            lowIsBad: true,
+            lowIsBad: true, // 낮을수록 링이 차오름
         },
     ];
 }
 
-// 색상 결정
-function getColor(metric) {
+// 링 색상 결정 — integratedScore.itemScores 기반
+function getColor(metric, itemScores) {
     if (!metric.active) return { ring: "#e5e5e5", text: "#bbb" };
-    const v = metric.value;
-    if (v === null) return { ring: "#d1d5db", text: "#9ca3af" };
-    const { warn, danger } = metric.thresholds;
-    let isWarn, isDanger;
-    if (metric.lowIsBad) {
-        isDanger = v < danger;
-        isWarn = !isDanger && v < warn;
-    } else if (metric.inverse) {
-        isDanger = v >= danger;
-        isWarn = !isDanger && v >= warn;
-    } else {
-        isDanger = v < danger;
-        isWarn = !isDanger && v < warn;
-    }
-    if (isDanger) return { ring: "#ef4444", text: "#ef4444" };
-    if (isWarn) return { ring: "#f97316", text: "#f97316" };
-    return { ring: "#22c55e", text: "#22c55e" };
+    if (!itemScores) return { ring: "#d1d5db", text: "#9ca3af" };
+
+    const KEY_MAP = {
+        noFace: "얼굴 부재",
+        headTurn: "고개 방향",
+        eyeClosed: "눈 감김",
+        blink: "깜빡임 부족",
+    };
+    const scoreKey = KEY_MAP[metric.key];
+    const score = itemScores[scoreKey];
+
+    if (score === undefined) return { ring: "#e5e5e5", text: "#bbb" };
+
+    if (score < 30) return { ring: "#22c55e", text: "#22c55e" };
+    if (score < 50) return { ring: "#f97316", text: "#f97316" };
+    return { ring: "#ef4444", text: "#ef4444" };
 }
 
 // 채움 비율 계산
 function getFillRatio(metric) {
     if (!metric.active || metric.value === null) return 0;
-    return Math.min(Math.max(metric.value / metric.max, 0), 1);
+    const ratio = metric.value / metric.max;
+    if (metric.lowIsBad) return Math.min(Math.max(1 - ratio, 0), 1);
+    return Math.min(Math.max(ratio, 0), 1);
 }
 
-// 링 크기 고정값
 const RING_SIZE = 200;
 const RING_RADIUS = 76;
 const RING_STROKE = 11;
 const RING_FONT_VALUE = 26;
 const RING_FONT_LABEL = 15;
 
-// SVG 링 컴포넌트
-function Ring({ metric }) {
+function Ring({ metric, itemScores }) {
     const size = RING_SIZE;
     const r = RING_RADIUS;
     const sw = RING_STROKE;
     const c = size / 2;
     const circumference = 2 * Math.PI * r;
-    const color = getColor(metric);
+    const color = getColor(metric, itemScores);
     const dashOffset = circumference * (1 - getFillRatio(metric));
+
     const displayVal = (() => {
         if (metric.value === null) return "—";
         if (metric.key === "eyeClosed" || metric.key === "noFace") {
@@ -180,19 +172,19 @@ function Ring({ metric }) {
     );
 }
 
-// 메인 컴포넌트
-export default function FocusRings({ result, currentMode }) {
+export default function FocusRings({ result, currentMode, integratedScore }) {
     const metrics = useMemo(
         () => buildMetrics(result, currentMode),
         [result, currentMode],
     );
+    const itemScores = integratedScore?.itemScores ?? null;
 
     return (
         <div className={styles.card}>
             <div className={styles.cardTitle}>집중도 모니터링</div>
             <div className={styles.grid}>
                 {metrics.map((m) => (
-                    <Ring key={m.key} metric={m} />
+                    <Ring key={m.key} metric={m} itemScores={itemScores} />
                 ))}
             </div>
         </div>

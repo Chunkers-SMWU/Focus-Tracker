@@ -12,8 +12,8 @@ function fmt(sec) {
 
 const ITEMS = [
     { key: "focusSec", label: "집중", color: "#2563eb" },
-    { key: "totalSec", label: "전체", color: "#888" },
     { key: "nonFocusSec", label: "비집중", color: "#dc2626" },
+    { key: "totalSec", label: "전체", color: "#888" },
 ];
 
 export default function FocusTimeChart({

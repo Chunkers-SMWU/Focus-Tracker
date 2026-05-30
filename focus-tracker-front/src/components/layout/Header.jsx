@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styles from "./Header.module.css";
+import logo from "../../assets/logo.png";
 
 const modeNavItems = {
     강의: { icon: "🎓", label: "강의시청" },
@@ -26,6 +27,11 @@ export default function Header({
         <header className={styles.header}>
             {/* 로고 */}
             <span className={styles.logo} onClick={onGoMain}>
+                <img
+                    src={logo}
+                    alt="Focus Tracker 로고"
+                    className={styles.logoImg}
+                />
                 Focus-Tracker
             </span>
 

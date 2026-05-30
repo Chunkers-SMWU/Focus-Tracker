@@ -20,17 +20,16 @@ const STEP_CONFIG = {
 };
 
 export default function DrowsyAlertModal({ step, onContinue, onRest }) {
-    const [restMinutes, setRestMinutes] = useState(0); // 0 = 설정 안 함
+    const [restMinutes, setRestMinutes] = useState(0);
 
     if (!step) return null;
 
     const { emoji, title, desc } = STEP_CONFIG[step];
-
     const handleRest = () => onRest(restMinutes > 0 ? restMinutes : null);
 
     return (
         <div className={styles.overlay}>
-            <div className={styles.modal}>
+            <div className={`${styles.modal} ${styles[`step${step}`]}`}>
                 <span className={styles.emoji}>{emoji}</span>
                 <p className={styles.title}>{title}</p>
                 <p className={styles.desc}>{desc}</p>
