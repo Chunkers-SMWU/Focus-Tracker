@@ -24,13 +24,6 @@
     font-weight: 700;
     color: #1a1a1a;
     letter-spacing: -0.02em;
-    margin-bottom: 6px;
-    text-align: center;
-}
-
-.subtitle {
-    font-size: 13px;
-    color: #888;
     margin-bottom: 36px;
     text-align: center;
 }
@@ -66,7 +59,7 @@
 
 .cardLabel {
     padding: 16px 16px 8px;
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 700;
     color: #1a1a1a;
     display: flex;
@@ -97,7 +90,7 @@
 }
 
 .cardDesc {
-    font-size: 11px;
+    font-size: 14px;
     color: #888;
     line-height: 1.6;
     margin: 0;

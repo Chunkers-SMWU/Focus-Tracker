@@ -1,17 +1,13 @@
 import { useState } from "react";
-import ThresholdTable from "../components/settings/ThresholdTable";
 import BlockedSiteList from "../components/settings/BlockedSiteList";
 import OptionToggles from "../components/settings/OptionToggles";
 import Toast from "../components/Toast";
-import { modeData } from "../data/modeData";
 import styles from "./SettingsPage.module.css";
 
 const VOLUME_KEY = "focusAlertVolume";
 
 export default function SettingsPage({
     currentMode,
-    thresholds,
-    onThresholdChange,
     sites,
     onSiteAdd,
     onSiteRemove,
@@ -25,8 +21,6 @@ export default function SettingsPage({
     onSave: onSaveOrig,
     onClose,
 }) {
-    const badge = modeData[currentMode].label;
-
     const [volume, setVolume] = useState(() => {
         const saved = localStorage.getItem(VOLUME_KEY);
         return saved !== null ? Number(saved) : 70;
@@ -98,21 +92,6 @@ export default function SettingsPage({
                             </button>
                         </div>
                     </div>
-                </Section>
-
-                <Section
-                    title={
-                        <>
-                            탭 활동 경고 기준
-                            <span className={styles.badge}>{badge}모드</span>
-                        </>
-                    }
-                >
-                    <ThresholdTable
-                        currentMode={currentMode}
-                        thresholds={thresholds}
-                        onChange={onThresholdChange}
-                    />
                 </Section>
 
                 <Section title="허용 페이지 설정">

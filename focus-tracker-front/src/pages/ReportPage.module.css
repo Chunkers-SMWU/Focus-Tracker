@@ -80,6 +80,12 @@
     color: #bbb;
 }
 
+/* 상태 배지 */
+.overallStatus {
+    font-size: 26px;
+    font-weight: 700;
+}
+
 .overallLabel {
     font-size: 14px;
     color: #999;

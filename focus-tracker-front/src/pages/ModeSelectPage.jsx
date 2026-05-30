@@ -39,9 +39,6 @@ export default function ModeSelectPage({ onSelect }) {
             {/* 타이틀 */}
             <p className={styles.brand}>Focus Tracker</p>
             <h1 className={styles.title}>모드를 선택하세요</h1>
-            <p className={styles.subtitle}>
-                선택한 모드로 집중 세션이 시작됩니다
-            </p>
 
             {/* 카드 그리드 */}
             <div className={styles.grid}>

@@ -285,6 +285,7 @@ function playAlertSound(volume) {
  * @param {function} onRest      - 휴식하기 콜백
  * @param {object}   thresholds  - 사용자 설정 임계값
  * @param {string}   currentMode - 현재 모드
+ * @param {function} onAlertStep - 경고 단계 변경 시 useDrowsyDetection에 전달하는 콜백
  */
 export default function useDrowsyAlert(
     result,
@@ -294,6 +295,7 @@ export default function useDrowsyAlert(
     onRest,
     thresholds,
     currentMode,
+    onAlertStep,
 ) {
     const [alertStep, setAlertStep] = useState(null);
     const [alertLog, setAlertLog] = useState([]);
@@ -318,6 +320,7 @@ export default function useDrowsyAlert(
     const runningRef = useRef(running);
     const thresholdsRef = useRef(thresholds);
     const currentModeRef = useRef(currentMode);
+    const onAlertStepRef = useRef(onAlertStep);
 
     useEffect(() => {
         resultRef.current = result;
@@ -337,6 +340,9 @@ export default function useDrowsyAlert(
     useEffect(() => {
         currentModeRef.current = currentMode;
     }, [currentMode]);
+    useEffect(() => {
+        onAlertStepRef.current = onAlertStep;
+    }, [onAlertStep]);
 
     const getVolume = () => {
         const v = localStorage.getItem("focusAlertVolume");
@@ -366,17 +372,24 @@ export default function useDrowsyAlert(
                     timestamp: new Date().toISOString(),
                 },
             ]);
+
             setAlertStep(step);
+            onAlertStepRef.current?.(step); // useDrowsyDetection에 단계 전달
+
             startCooldown();
         },
         [startCooldown],
     );
 
-    const handleContinue = useCallback(() => setAlertStep(null), []);
+    const handleContinue = useCallback(() => {
+        setAlertStep(null);
+        onAlertStepRef.current?.(null);
+    }, []);
 
     const handleRest = useCallback(
         (restMinutes) => {
             setAlertStep(null);
+            onAlertStepRef.current?.(null);
             onRest(restMinutes);
         },
         [onRest],
@@ -388,6 +401,7 @@ export default function useDrowsyAlert(
         cooldownRef.current = false;
         clearTimeout(cooldownTimer.current);
         setAlertStep(null);
+        onAlertStepRef.current?.(null);
         // 재시작 시점의 웹캠 누적값 스냅샷 저장
         const r = resultRef.current;
         webcamSnapshotRef.current = {
@@ -402,6 +416,7 @@ export default function useDrowsyAlert(
         cooldownRef.current = false;
         clearTimeout(cooldownTimer.current);
         setAlertStep(null);
+        onAlertStepRef.current?.(null);
         setAlertLog([]);
         webcamSnapshotRef.current = {};
         setIntegratedScore({

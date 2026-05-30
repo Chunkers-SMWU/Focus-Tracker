@@ -2,7 +2,7 @@ import { useState } from "react";
 import styles from "./LoginPage.module.css";
 import { login } from "../api/authApi";
 
-export default function LoginPage({ onLogin, onGuest, onSignup }) {
+export default function LoginPage({ onLogin, onSignup }) {
     const [id, setId] = useState("");
     const [pw, setPw] = useState("");
     const [error, setError] = useState("");
@@ -67,10 +67,7 @@ export default function LoginPage({ onLogin, onGuest, onSignup }) {
                     <div className={styles.dividerLine} />
                 </div>
 
-                <div className={styles.subBtns}>
-                    <button className={styles.guestBtn} onClick={onGuest}>
-                        비회원으로 시작
-                    </button>
+                <div className={styles.signupRow}>
                     <button className={styles.signupBtn} onClick={onSignup}>
                         회원가입
                     </button>

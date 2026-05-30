@@ -35,14 +35,8 @@ function OverallRing({ integratedScore }) {
     const offset =
         circumference * (1 - (focusScore !== null ? focusScore / 100 : 0));
 
-    const color =
-        focusScore === null
-            ? "#d1d5db"
-            : focusScore >= 70
-              ? "#22c55e"
-              : focusScore >= 50
-                ? "#f97316"
-                : "#ef4444";
+    // 링 색상 — status 기준으로 통일
+    const color = status ? (STATUS_COLORS[status] ?? "#d1d5db") : "#d1d5db";
 
     return (
         <div className={styles.overallRing}>

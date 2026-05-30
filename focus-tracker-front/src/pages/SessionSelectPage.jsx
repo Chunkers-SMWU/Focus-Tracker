@@ -26,7 +26,6 @@ export default function SessionSelectPage({ onSession, onMyPage }) {
         <div className={styles.container}>
             <p className={styles.brand}>Focus Tracker</p>
             <h1 className={styles.title}>무엇을 하시겠어요?</h1>
-            <p className={styles.subtitle}>원하는 항목을 선택하세요</p>
 
             <div className={styles.grid}>
                 {cards.map((card) => (

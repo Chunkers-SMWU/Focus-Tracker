@@ -188,6 +188,7 @@ export default function App() {
         handleAlertRestBridge,
         thresholds,
         currentMode,
+        drowsy.setAlertStep, // 경고 단계 → useDrowsyDetection 전달 (집중 시간 제어용)
     );
 
     const handleAlertRest = useCallback(
@@ -299,7 +300,6 @@ export default function App() {
         );
         // 저장 완료 시 스냅샷 갱신 — 이후 닫아도 되돌리지 않음
         settingsSnapshotRef.current = {
-            thresholds,
             sites,
             allowedSites,
             options,
@@ -313,7 +313,6 @@ export default function App() {
     const handleSettingsOpen = () => {
         // 설정 열기 전 현재 값 스냅샷 저장
         settingsSnapshotRef.current = {
-            thresholds,
             sites,
             allowedSites,
             options,
@@ -326,7 +325,6 @@ export default function App() {
     const handleClose = () => {
         // 저장 없이 닫으면 스냅샷으로 되돌림
         if (settingsSnapshotRef.current) {
-            setThresholds(settingsSnapshotRef.current.thresholds);
             setSites(settingsSnapshotRef.current.sites);
             setAllowedSites(settingsSnapshotRef.current.allowedSites);
             setOptions(settingsSnapshotRef.current.options);
@@ -353,6 +351,7 @@ export default function App() {
             totalTime: Math.round(result.totalSeconds ?? 0),
             focusScore: Math.round(integratedScore?.score ?? 0), // 종합 집중도 점수
             alertCount: currentAlertLog.length,
+            maxFocusTime: Math.round(result.maxFocusSeconds ?? 0), // 최대 집중 시간
         }).catch((e) => console.error("세션 저장 실패:", e));
 
         drowsy.stop();
@@ -393,7 +392,6 @@ export default function App() {
         setUser(userInfo);
         setPage("start");
     };
-    const handleGuest = () => setPage("start");
     const handleSignupPage = () => setPage("signup");
     const handleSignupComplete = () => setPage("login");
     const handleLogout = () => {
@@ -451,11 +449,7 @@ export default function App() {
 
             {/* 로그인 */}
             {!showSplash && page === "login" && (
-                <LoginPage
-                    onLogin={handleLogin}
-                    onGuest={handleGuest}
-                    onSignup={handleSignupPage}
-                />
+                <LoginPage onLogin={handleLogin} onSignup={handleSignupPage} />
             )}
 
             {/* 회원가입 */}
@@ -516,7 +510,10 @@ export default function App() {
                         onEnd={handleEnd}
                         onReset={handleReset}
                         alertStep={alertStep}
-                        onAlertContinue={handleContinue}
+                        onAlertContinue={() => {
+                            handleContinue();
+                            resetAlertStats(); // 계속하기 시 팝업 판단용 탭 카운트 리셋
+                        }}
                         onAlertRest={handleRest}
                         restTimerMinutes={restTimerMinutes}
                         onRestTimerMinutesChange={setRestTimerMinutes}
@@ -533,10 +530,6 @@ export default function App() {
             {page === "settings" && (
                 <SettingsPage
                     currentMode={currentMode}
-                    thresholds={thresholds}
-                    onThresholdChange={(k, v) =>
-                        setThresholds((p) => ({ ...p, [k]: v }))
-                    }
                     sites={sites}
                     onSiteAdd={(s) => setSites((p) => [...p, s])}
                     onSiteRemove={(s) =>

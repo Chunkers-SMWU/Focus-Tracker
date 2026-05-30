@@ -106,34 +106,13 @@
     color: #aaa;
 }
 
-/* 보조 버튼 */
-.subBtns {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.guestBtn {
-    padding: 11px;
-    background: #fff;
-    color: #555;
-    border: 1px solid #e5e5e5;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
-    transition:
-        border-color 0.15s ease,
-        color 0.15s ease;
-}
-
-.guestBtn:hover {
-    border-color: #2563eb;
-    color: #2563eb;
+/* 회원가입 버튼 */
+.signupRow {
+    margin-top: 16px;
 }
 
 .signupBtn {
+    width: 100%;
     padding: 11px;
     background: #fff;
     color: #888;

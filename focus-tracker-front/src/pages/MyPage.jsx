@@ -5,15 +5,21 @@ import styles from "./MyPage.module.css";
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 const MODE_COLOR = {
-    강의: "#2563eb",
-    자료: "#16a34a",
-    잠금: "#dc2626",
+    LECTURE: "#2563eb",
+    SEARCH: "#16a34a",
+    LOCK: "#dc2626",
 };
 
 const MODE_BG = {
-    강의: "#eff6ff",
-    자료: "#f0fdf4",
-    잠금: "#fff1f2",
+    LECTURE: "#eff6ff",
+    SEARCH: "#f0fdf4",
+    LOCK: "#fff1f2",
+};
+
+const MODE_LABEL = {
+    LECTURE: "강의시청",
+    SEARCH: "자료검색",
+    LOCK: "잠금",
 };
 
 function toKey(year, month, day) {
@@ -60,8 +66,9 @@ export default function MyPage() {
     for (let i = 0; i < firstDay; i++) cells.push(null);
     for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
+    // 먼저 진행한 세션이 아래, 가장 최근 세션이 위에 표시
     const selectedSessions = selectedDate
-        ? (sessionData[selectedDate] ?? null)
+        ? (sessionData[selectedDate]?.slice().reverse() ?? null)
         : null;
 
     return (
@@ -110,17 +117,21 @@ export default function MyPage() {
                                 <span className={styles.cellDay}>{day}</span>
                                 <span className={styles.dotRow}>
                                     {sessions &&
-                                        sessions.map((s, idx) => (
-                                            <span
-                                                key={idx}
-                                                className={styles.dot}
-                                                style={{
-                                                    background:
-                                                        MODE_COLOR[s.mode] ??
-                                                        "#2563eb",
-                                                }}
-                                            />
-                                        ))}
+                                        sessions
+                                            .slice()
+                                            .reverse()
+                                            .map((s, idx) => (
+                                                <span
+                                                    key={idx}
+                                                    className={styles.dot}
+                                                    style={{
+                                                        background:
+                                                            MODE_COLOR[
+                                                                s.mode
+                                                            ] ?? "#2563eb",
+                                                    }}
+                                                />
+                                            ))}
                                 </span>
                             </button>
                         );
@@ -173,7 +184,7 @@ export default function MyPage() {
                                                         "#2563eb",
                                                 }}
                                             >
-                                                {s.mode}
+                                                {MODE_LABEL[s.mode] ?? s.mode}
                                             </p>
                                             <div
                                                 className={styles.sessionStats}
@@ -208,8 +219,7 @@ export default function MyPage() {
                                                         }
                                                     >
                                                         {formatSeconds(
-                                                            s.maxFocusSeconds ??
-                                                                0,
+                                                            s.maxFocusTime ?? 0,
                                                         )}
                                                     </span>
                                                 </div>

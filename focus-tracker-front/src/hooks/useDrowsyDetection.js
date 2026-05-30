@@ -67,7 +67,7 @@ const EYE_CLOSED_SECONDS = 0.5;
 const FACE_ABSENCE_THRESHOLD = 10;
 const HEAD_YAW_THRESHOLD = 45;
 const HEAD_DIRECTION_ALERT_COUNT = 3;
-// [추가] 고개 방향 쿨다운 — 브라우저 MediaPipe의 높은 fps로 인한 중복 카운트 방지
+// 고개 방향 쿨다운 — 브라우저 MediaPipe의 높은 fps로 인한 중복 카운트 방지
 // 파이썬은 낮은 fps 덕분에 자연스럽게 방지되던 것을 브라우저 환경에서 명시적으로 보정
 const HEAD_TURN_COOLDOWN = 1000; // ms
 
@@ -105,28 +105,30 @@ const makeInitialCounters = () => ({
     eyeClosedStart: null,
     eyeClosedDrowsy: false,
     eyeClosedTotalSeconds: 0,
-    closedDuration: 0, // 현재 연속 눈 감김 지속 시간(초)
+    closedDuration: 0,
     openMouthFrameCount: 0,
-    yawnCount: 0, // 누적 하품 횟수
+    yawnCount: 0,
     yawnDetected: false,
     headTiltFrameCount: 0,
     headTiltCount: 0,
     headTiltTotal: 0,
     headTilted: false,
     faceAbsenceStart: null,
-    faceAbsenceDuration: 0, // 현재 연속 얼굴 부재 시간(초)
+    faceAbsenceDuration: 0,
     noFaceSeconds: 0,
     headTurnChanged: false,
-    headTurnLastTime: 0, // [추가] 마지막 고개 방향 카운트 시각
+    headTurnLastTime: 0,
     headTurnCount: 0,
     headTurnTotal: 0,
     startTime: null,
     lastFrameTime: null,
     focusSeconds: 0,
-    nonFocusSeconds: 0,
     stoppedTotalSeconds: 0,
     maxFocusSeconds: 0,
     lastStartFocusSeconds: 0,
+    // 집중 시간 측정 중지 관련 (경고 단계 기반)
+    focusPausedUntil: null, // 1,2단계 경고 후 30초 중지 종료 시각 (ms)
+    focusPaused: false, // 현재 집중 시간 측정 중지 여부
 });
 
 export function useDrowsyDetection(videoRef) {
@@ -135,6 +137,7 @@ export function useDrowsyDetection(videoRef) {
     const [running, setRunning] = useState(false);
 
     const currentModeRef = useRef("강의");
+    const alertStepRef = useRef(null); // 외부에서 주입받는 경고 단계
     const detectorRef = useRef(new BlinkDetector());
     const faceMeshRef = useRef(null);
     const streamRef = useRef(null);
@@ -142,7 +145,38 @@ export function useDrowsyDetection(videoRef) {
     const countersRef = useRef(makeInitialCounters());
     const closedRef = useRef(false);
 
-    const stop = () => {
+    // alertStep 동기화 — useDrowsyAlert에서 경고 단계 변경 시 호출
+    const setAlertStep = useCallback((step) => {
+        const prev = alertStepRef.current;
+        alertStepRef.current = step;
+
+        const c = countersRef.current;
+
+        if (step === null) {
+            // 모달 닫힘 — focusPausedUntil이 남아있으면 30초 중지 유지, 없으면 즉시 재개
+            if (!c.focusPausedUntil) {
+                c.focusPaused = false;
+            }
+            c.lastStartFocusSeconds = c.focusSeconds;
+            return;
+        }
+
+        if (step === 3) {
+            // 3단계: 즉시 중지, start() 호출(휴식 종료) 전까지 유지
+            const segmentFocus = c.focusSeconds - c.lastStartFocusSeconds;
+            c.maxFocusSeconds = Math.max(c.maxFocusSeconds, segmentFocus);
+            c.focusPaused = true;
+            c.focusPausedUntil = null;
+        } else if ((step === 1 || step === 2) && prev !== step) {
+            // 1, 2단계: 30초 중지
+            const segmentFocus = c.focusSeconds - c.lastStartFocusSeconds;
+            c.maxFocusSeconds = Math.max(c.maxFocusSeconds, segmentFocus);
+            c.focusPaused = true;
+            c.focusPausedUntil = Date.now() + 30 * 1000;
+        }
+    }, []);
+
+    const stop = useCallback(() => {
         closedRef.current = true;
         cameraRef.current?.stop();
         cameraRef.current = null;
@@ -160,7 +194,7 @@ export function useDrowsyDetection(videoRef) {
         // 구간 종료 — 이번 구간 집중 시간 계산 후 최댓값 갱신
         const segmentFocus = c.focusSeconds - c.lastStartFocusSeconds;
         c.maxFocusSeconds = Math.max(c.maxFocusSeconds, segmentFocus);
-    };
+    }, [videoRef]);
 
     const closeFaceMesh = useCallback(() => {
         closedRef.current = true;
@@ -178,6 +212,7 @@ export function useDrowsyDetection(videoRef) {
         setRunning(false);
         detectorRef.current = new BlinkDetector();
         countersRef.current = makeInitialCounters();
+        alertStepRef.current = null;
         setResult(INITIAL_RESULT);
         setError(null);
     };
@@ -223,11 +258,15 @@ export function useDrowsyDetection(videoRef) {
             startTime: Date.now(),
             lastFrameTime: Date.now(),
             focusSeconds: prev.focusSeconds ?? 0,
-            nonFocusSeconds: prev.nonFocusSeconds ?? 0,
             stoppedTotalSeconds: prev.stoppedTotalSeconds ?? 0,
             maxFocusSeconds: prev.maxFocusSeconds ?? 0,
             lastStartFocusSeconds: prev.focusSeconds ?? 0,
+            // 재시작 시 집중 시간 측정 재개
+            focusPausedUntil: null,
+            focusPaused: false,
         };
+        // 재시작 시 경고 단계 초기화
+        alertStepRef.current = null;
 
         try {
             await loadScript(
@@ -265,11 +304,29 @@ export function useDrowsyDetection(videoRef) {
                 const totalSeconds =
                     c.stoppedTotalSeconds + (now - c.startTime) / 1000;
 
+                // 1,2단계 30초 중지 — 시간 지나면 자동 재개
+                if (c.focusPaused && c.focusPausedUntil !== null) {
+                    if (now >= c.focusPausedUntil) {
+                        c.focusPaused = false;
+                        c.focusPausedUntil = null;
+                        c.lastStartFocusSeconds = c.focusSeconds;
+                    }
+                }
+
+                // 집중 시간 — 경고 단계 기반 (focusPaused 아닐 때만 누적)
+                if (!c.focusPaused) c.focusSeconds += delta;
+
+                // 비집중 시간 — 세션 이용시간 - 집중시간
+                const nonFocusSeconds = Math.max(
+                    totalSeconds - c.focusSeconds,
+                    0,
+                );
+
                 const noFaceActive = NO_FACE_MODES.has(currentModeRef.current);
 
                 // 얼굴 미감지
                 if (!res.multiFaceLandmarks?.length) {
-                    c.closedDuration = 0; // 얼굴 없으면 눈 감김 초기화
+                    c.closedDuration = 0;
 
                     if (noFaceActive) {
                         if (c.faceAbsenceStart === null)
@@ -277,11 +334,6 @@ export function useDrowsyDetection(videoRef) {
                         c.faceAbsenceDuration =
                             (now - c.faceAbsenceStart) / 1000;
                         c.noFaceSeconds += delta;
-
-                        const noFaceAlert =
-                            c.faceAbsenceDuration >= FACE_ABSENCE_THRESHOLD;
-                        if (!noFaceAlert) c.focusSeconds += delta;
-                        else c.nonFocusSeconds += delta;
 
                         setResult((prev) => ({
                             ...prev,
@@ -293,11 +345,12 @@ export function useDrowsyDetection(videoRef) {
                                 c.faceAbsenceDuration.toFixed(1),
                             ),
                             closedDuration: 0,
-                            alert: noFaceAlert,
+                            alert:
+                                c.faceAbsenceDuration >= FACE_ABSENCE_THRESHOLD,
                             totalSeconds: parseFloat(totalSeconds.toFixed(1)),
                             focusSeconds: parseFloat(c.focusSeconds.toFixed(1)),
                             nonFocusSeconds: parseFloat(
-                                c.nonFocusSeconds.toFixed(1),
+                                nonFocusSeconds.toFixed(1),
                             ),
                         }));
                     }
@@ -351,7 +404,7 @@ export function useDrowsyDetection(videoRef) {
                 }
                 const mouthOpen = c.openMouthFrameCount >= OPEN_MOUTH_FRAMES;
 
-                // 고개 기울기(roll) — 카운트만 유지 (집중/비집중 판단에서 제외)
+                // 고개 기울기(roll) — 카운트만 유지
                 if (tiltAngle > HEAD_TILT_THRESHOLD) {
                     c.headTiltFrameCount++;
                     if (
@@ -389,16 +442,9 @@ export function useDrowsyDetection(videoRef) {
                 if (tiltAlert) c.headTiltCount = 0;
                 if (headTurnAlert) c.headTurnCount = 0;
 
-                // alert — 집중도 모니터링 4개 항목 기준 (얼굴 부재는 얼굴 감지 블록 밖에서 처리)
+                // alert — 집중도 모니터링 4개 항목 기준
                 const alert =
                     eyesClosed || headTurnAlert || blinkState === "DROWSY";
-
-                // 집중/비집중 판단 — 집중도 모니터링 항목과 동일한 기준
-                const unfocused =
-                    eyesClosed || headTurnAlert || blinkState === "DROWSY";
-
-                if (!unfocused) c.focusSeconds += delta;
-                else c.nonFocusSeconds += delta;
 
                 setResult({
                     ear: parseFloat(ear.toFixed(3)),
@@ -416,7 +462,7 @@ export function useDrowsyDetection(videoRef) {
                     alert,
                     totalSeconds: parseFloat(totalSeconds.toFixed(1)),
                     focusSeconds: parseFloat(c.focusSeconds.toFixed(1)),
-                    nonFocusSeconds: parseFloat(c.nonFocusSeconds.toFixed(1)),
+                    nonFocusSeconds: parseFloat(nonFocusSeconds.toFixed(1)),
                     eyeClosedSeconds: parseFloat(
                         c.eyeClosedTotalSeconds.toFixed(1),
                     ),
@@ -464,5 +510,14 @@ export function useDrowsyDetection(videoRef) {
         currentModeRef.current = mode;
     }, []);
 
-    return { result, error, running, start, stop, reset, setMode };
+    return {
+        result,
+        error,
+        running,
+        start,
+        stop,
+        reset,
+        setMode,
+        setAlertStep,
+    };
 }
