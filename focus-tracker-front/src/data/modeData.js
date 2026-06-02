@@ -1,0 +1,53 @@
+export const modeData = {
+    강의: {
+        label: "강의시청",
+        values: {
+            tabSwitch: null,
+            tabAway: 300, // 파이썬 로직 기준 300초
+            rapidSwitch: 1,
+            blockedAccess: 1,
+        },
+        units: {
+            tabSwitch: null,
+            tabAway: "초",
+            rapidSwitch: "회",
+            blockedAccess: "회",
+        },
+    },
+    자료: {
+        label: "자료검색",
+        values: {
+            tabSwitch: null,
+            tabAway: null,
+            rapidSwitch: null,
+            blockedAccess: 1,
+        },
+        units: {
+            tabSwitch: null,
+            tabAway: null,
+            rapidSwitch: null,
+            blockedAccess: "회",
+        },
+    },
+    잠금: {
+        label: "잠금",
+        values: { tabSwitch: 1, tabAway: 10, rapidSwitch: 1, blockedAccess: 1 },
+        units: {
+            tabSwitch: "회",
+            tabAway: "초",
+            rapidSwitch: "회",
+            blockedAccess: "회",
+        },
+    },
+};
+
+export const fieldMap = [
+    { id: "tab-switch", key: "tabSwitch", label: "탭 전환 횟수" },
+    { id: "tab-away", key: "tabAway", label: "탭 이탈 누적 시간" },
+    { id: "rapid-switch", key: "rapidSwitch", label: "짧은 간격 반복 전환" },
+    {
+        id: "blocked-access",
+        key: "blockedAccess",
+        label: "허용되지 않은 창 접속",
+    },
+];

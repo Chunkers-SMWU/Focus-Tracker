@@ -1,0 +1,82 @@
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+}
+
+.rowBorder {
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.rowTitle {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.rowDesc {
+    font-size: 12px;
+    color: #888;
+    margin-top: 3px;
+}
+
+/* 휴식 시간 인풋 */
+.restInputRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.restInput {
+    width: 60px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 5px 8px;
+    font-size: 13px;
+    background: #fafafa;
+    text-align: center;
+    outline: none;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    transition: border-color 0.15s ease;
+}
+
+.restInput:focus {
+    border-color: #2563eb;
+}
+
+.restUnit {
+    font-size: 13px;
+    color: #888;
+}
+
+/* 토글 */
+.toggleLabel {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.toggleInput {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggleTrack {
+    position: absolute;
+    inset: 0;
+    border-radius: 11px;
+    transition: background 0.2s ease;
+}
+
+.toggleThumb {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: left 0.2s ease;
+}

@@ -1,0 +1,36 @@
+.card {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+}
+
+.cardTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 14px;
+}
+
+.rowLabel {
+    color: #888;
+}
+
+.rowValue {
+    font-weight: 600;
+    color: #1a1a1a;
+}

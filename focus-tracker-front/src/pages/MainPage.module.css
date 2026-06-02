@@ -1,0 +1,329 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: calc(100vh - 56px);
+    background: #fff;
+    gap: 12px;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    padding: 0 1.5rem 24px;
+    box-sizing: border-box;
+}
+
+/* 모드 표시 */
+.modeLabel {
+    font-size: 18px;
+    color: #999;
+    letter-spacing: 0.05em;
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+
+.modeName {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0;
+}
+
+/* 중간 3열 */
+.topGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    width: 100%;
+    max-width: 1000px;
+    box-sizing: border-box;
+}
+
+/* RestStats + 타이머 설정을 세로로 쌓는 컬럼 */
+.restColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 휴식 타이머 설정 박스 */
+.restTimerBox {
+    background: #f9fafb;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.restTimerLabel {
+    font-size: 16px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0;
+}
+
+.restTimerRight {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.restTimerControls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.restTimerBtn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid #e5e5e5;
+    background: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+}
+
+.restTimerBtn:hover {
+    background: #e5e7eb;
+    border-color: #aaa;
+    color: #333;
+}
+
+.restTimerValue {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+    min-width: 40px;
+    text-align: center;
+}
+
+.restTimerStartBtn {
+    padding: 5px 16px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    transition: background 0.15s ease;
+}
+
+.restTimerStartBtn:hover {
+    background: #1d4ed8;
+}
+
+.restTimerLabelDisabled {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ccc;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0;
+    padding: 4px 0;
+}
+
+.restTimerDisabledMsg {
+    font-size: 14px;
+    color: #ccc;
+    margin: 0;
+}
+
+.restCountdown {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2563eb;
+    margin: 0;
+    letter-spacing: 0.04em;
+}
+
+/* 하단 집중도 모니터링 */
+.monitorRow {
+    width: 100%;
+    max-width: 1000px;
+    box-sizing: border-box;
+}
+
+/* 버튼 행 */
+.btnRow {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 4px;
+}
+
+.startBtn {
+    padding: 10px 80px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease,
+        transform 0.1s ease;
+}
+
+.startBtn:hover {
+    filter: brightness(0.92);
+}
+
+.startBtn:active {
+    transform: scale(0.97);
+    filter: brightness(0.85);
+}
+
+.startBtnRest:hover {
+    background: #e5e7eb !important;
+    border-color: #aaa !important;
+    color: #333 !important;
+}
+
+.resetBtn {
+    padding: 10px 28px;
+    background: #fff;
+    color: #888;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    transition:
+        border-color 0.15s ease,
+        color 0.15s ease,
+        transform 0.1s ease;
+}
+
+.resetBtn:hover {
+    border-color: #888;
+    color: #1a1a1a;
+}
+
+.resetBtn:active {
+    transform: scale(0.97);
+}
+
+.endBtn {
+    padding: 10px 28px;
+    background: #fff;
+    color: #888;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    transition:
+        border-color 0.15s ease,
+        color 0.15s ease,
+        transform 0.1s ease;
+}
+
+.endBtn:hover {
+    border-color: #dc2626;
+    color: #dc2626;
+}
+
+.endBtn:active {
+    transform: scale(0.97);
+}
+
+/* 재시작 안내 팝업 */
+.popupOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    animation: fadeIn 0.2s ease;
+}
+
+.popup {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px 28px 24px;
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    position: relative;
+    animation: slideUp 0.22s ease;
+}
+
+.popupClose {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: #aaa;
+    cursor: pointer;
+    line-height: 1;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    transition: color 0.15s ease;
+}
+
+.popupClose:hover {
+    color: #555;
+}
+
+.popupEmoji {
+    font-size: 40px;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.popupTitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+}
+
+.popupDesc {
+    font-size: 13px;
+    color: #888;
+    margin: 0;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(12px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

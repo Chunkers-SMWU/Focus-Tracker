@@ -1,0 +1,107 @@
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #1a1a1a;
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+}
+
+/* 로고 */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+    flex-shrink: 0;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    cursor: pointer;
+}
+
+.logoImg {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    margin-left: -16px;
+    margin-right: -18px;
+}
+
+/* 모드 탭 */
+.nav {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 999px;
+    padding: 4px 6px;
+    overflow: hidden;
+}
+
+.navLocked {
+    cursor: not-allowed;
+}
+
+.modeLabel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    pointer-events: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.1em;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    white-space: nowrap;
+}
+
+.modeBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.modeBtnLocked {
+    cursor: not-allowed;
+}
+
+/* 우측 버튼 그룹 */
+.btnGroup {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.headerBtn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 6px 16px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+}
+
+.headerBtn:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
